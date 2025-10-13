@@ -1,1 +1,1 @@
-# Proyecto-del-curso-EVOL.-Y-CONF.-DE-SOFTWARE-para-gestionar-una-veterinaria.
+# Proyecto-de-veterinaria---Evolucion-de-Software
