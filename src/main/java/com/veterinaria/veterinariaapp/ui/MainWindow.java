@@ -11,12 +11,16 @@ package com.veterinaria.veterinariaapp.ui;
 public class MainWindow extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainWindow.class.getName());
-
+    private com.veterinaria.veterinariaapp.ui.ClienteViewForm clientesWindow;
     /**
      * Creates new form MainWindow
      */
     public MainWindow() {
         initComponents();
+        
+        // tamaño inicial y mínimos
+        setMinimumSize(new java.awt.Dimension(1024, 640));
+        setSize(1200, 700);              // tamaño con el que arrancará
 
         setTitle("Veterinario - Panel Principal");
         setLocationRelativeTo(null); // centrar
@@ -37,15 +41,29 @@ public class MainWindow extends javax.swing.JFrame {
         miSalir.setAccelerator(javax.swing.KeyStroke.getKeyStroke(
                 java.awt.event.KeyEvent.VK_Q, java.awt.event.InputEvent.CTRL_DOWN_MASK));
 
-        // Módulos (de momento solo mensaje)
-        miDuenos.addActionListener(e ->
-                javax.swing.JOptionPane.showMessageDialog(this, "Abrir módulo: Dueños"));
+        // Módulos clientes para abrir con un JPanel
+        miDuenos.addActionListener(e -> {
+            // 1) Instancia tu vista existente
+           var vista = new com.veterinaria.veterinariaapp.ui.ClienteViewForm();
+
+           // 2) Limpia el panel contenedor
+           jPanelClientes.removeAll();
+           jPanelClientes.setLayout(new java.awt.BorderLayout());
+
+           // 3) Inserta el contenido del JFrame dentro del panel
+           jPanelClientes.add(vista.getContentPane(), java.awt.BorderLayout.CENTER);
+
+           // 4) Refresca
+           jPanelClientes.revalidate();
+           jPanelClientes.repaint();
+        });
         miMascotas.addActionListener(e ->
                 javax.swing.JOptionPane.showMessageDialog(this, "Abrir módulo: Mascotas"));
         miCitas.addActionListener(e ->
                 javax.swing.JOptionPane.showMessageDialog(this, "Abrir módulo: Citas"));
     }
-
+    
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -55,6 +73,7 @@ public class MainWindow extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jPanelClientes = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         miCerrarSesion = new javax.swing.JMenuItem();
@@ -65,6 +84,8 @@ public class MainWindow extends javax.swing.JFrame {
         miCitas = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        jPanelClientes.setLayout(new java.awt.BorderLayout());
 
         jMenu1.setText("Archivo");
 
@@ -95,18 +116,16 @@ public class MainWindow extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 733, Short.MAX_VALUE)
+            .addComponent(jPanelClientes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 555, Short.MAX_VALUE)
+            .addComponent(jPanelClientes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
      
-    
-    
     /**
      * @param args the command line arguments
      */
@@ -145,6 +164,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JPanel jPanelClientes;
     private javax.swing.JMenuItem miCerrarSesion;
     private javax.swing.JMenuItem miCitas;
     private javax.swing.JMenuItem miDuenos;
