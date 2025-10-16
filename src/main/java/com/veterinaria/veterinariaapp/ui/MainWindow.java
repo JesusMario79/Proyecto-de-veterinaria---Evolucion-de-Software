@@ -12,6 +12,7 @@ public class MainWindow extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainWindow.class.getName());
     private com.veterinaria.veterinariaapp.ui.ClienteViewForm clientesWindow;
+    private com.veterinaria.veterinariaapp.ui.MascotaViewForm mascotasWindow;
     /**
      * Creates new form MainWindow
      */
@@ -32,7 +33,8 @@ public class MainWindow extends javax.swing.JFrame {
             new com.veterinaria.veterinariaapp.ui.LoginFrame().setVisible(true);
             dispose();
         });
-
+        
+       
         miSalir.addActionListener(e -> System.exit(0));
 
         // Atajos (opcional)
@@ -45,23 +47,52 @@ public class MainWindow extends javax.swing.JFrame {
         miDuenos.addActionListener(e -> {
             // 1) Instancia tu vista existente
            var vista = new com.veterinaria.veterinariaapp.ui.ClienteViewForm();
+          
 
            // 2) Limpia el panel contenedor
            jPanelClientes.removeAll();
            jPanelClientes.setLayout(new java.awt.BorderLayout());
+           
+           
 
            // 3) Inserta el contenido del JFrame dentro del panel
            jPanelClientes.add(vista.getContentPane(), java.awt.BorderLayout.CENTER);
+          
+          
 
            // 4) Refresca
            jPanelClientes.revalidate();
            jPanelClientes.repaint();
+           
+           
         });
-        miMascotas.addActionListener(e ->
-                javax.swing.JOptionPane.showMessageDialog(this, "Abrir módulo: Mascotas"));
+        
+        // ====== Módulo MASCOTAS ======
+        miMascotas.addActionListener(e -> {
+        // Si el panel ya pertenece a otro contenedor, lo quitamos
+         java.awt.Container padre = jPanelMascotas.getParent();
+         if (padre != null) padre.remove(jPanelMascotas);
+            var vista1 = new com.veterinaria.veterinariaapp.ui.MascotaViewForm();
+            // Limpia el área de trabajo
+            jPanelClientes.removeAll();
+            jPanelClientes.setLayout(new java.awt.BorderLayout());
+
+            // Agrega el panel de mascotas
+            jPanelClientes.add(vista1.getContentPane(), java.awt.BorderLayout.CENTER);
+
+            // Refresca (pinta la vista de mascotas)
+            jPanelClientes.revalidate();
+            jPanelClientes.repaint();
+        });
+        
+  
+
         miCitas.addActionListener(e ->
                 javax.swing.JOptionPane.showMessageDialog(this, "Abrir módulo: Citas"));
     }
+    
+    
+    
     
     
     /**
@@ -74,6 +105,7 @@ public class MainWindow extends javax.swing.JFrame {
     private void initComponents() {
 
         jPanelClientes = new javax.swing.JPanel();
+        jPanelMascotas = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         miCerrarSesion = new javax.swing.JMenuItem();
@@ -87,6 +119,9 @@ public class MainWindow extends javax.swing.JFrame {
 
         jPanelClientes.setLayout(new java.awt.BorderLayout());
 
+        jPanelMascotas.setLayout(new java.awt.BorderLayout());
+        jPanelClientes.add(jPanelMascotas, java.awt.BorderLayout.CENTER);
+
         jMenu1.setText("Archivo");
 
         miCerrarSesion.setText("Cerrar Sesión");
@@ -99,10 +134,15 @@ public class MainWindow extends javax.swing.JFrame {
 
         jMenu2.setText("Modulos");
 
-        miDuenos.setText("Dueños");
+        miDuenos.setText("Clientes");
         jMenu2.add(miDuenos);
 
         miMascotas.setText("Mascotas");
+        miMascotas.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miMascotasActionPerformed(evt);
+            }
+        });
         jMenu2.add(miMascotas);
 
         miCitas.setText("Citas");
@@ -120,11 +160,17 @@ public class MainWindow extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanelClientes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanelClientes, javax.swing.GroupLayout.PREFERRED_SIZE, 607, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void miMascotasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miMascotasActionPerformed
+     
+    }//GEN-LAST:event_miMascotasActionPerformed
      
     /**
      * @param args the command line arguments
@@ -165,6 +211,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JPanel jPanelClientes;
+    private javax.swing.JPanel jPanelMascotas;
     private javax.swing.JMenuItem miCerrarSesion;
     private javax.swing.JMenuItem miCitas;
     private javax.swing.JMenuItem miDuenos;
