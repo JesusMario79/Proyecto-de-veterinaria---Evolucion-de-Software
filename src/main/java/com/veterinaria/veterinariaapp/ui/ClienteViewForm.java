@@ -1,7 +1,7 @@
 package com.veterinaria.veterinariaapp.ui;
 
 import com.veterinaria.veterinariaapp.ui.ClienteTableModel;
-import com.veterinaria.veterinariaapp.dao.ClienteDao;
+import com.veterinaria.veterinariaapp.repository.ClienteRepository;
 import com.veterinaria.veterinariaapp.model.Cliente;
 import java.util.ArrayList;
 
@@ -91,7 +91,7 @@ public class ClienteViewForm extends javax.swing.JFrame {
         mostrarDialogoAgregar();
     }//GEN-LAST:event_btnRegistroClienteActionPerformed
     // --- DAO y modelo de tabla (sin clases extra) ---
-    private final ClienteDao dao = new ClienteDao();
+    private final ClienteRepository dao = new ClienteRepository();
     private final ClienteTableModel model = new ClienteTableModel(new ArrayList<>());
     
     private void mostrarDialogoAgregar() {
