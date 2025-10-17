@@ -4,6 +4,7 @@ import com.veterinaria.veterinariaapp.model.Usuario;
 import com.veterinaria.veterinariaapp.service.UserService;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.util.List;
 
@@ -12,6 +13,7 @@ public class UsuariosPanel extends JPanel {
     private JTable tabla;
     private UsuarioTableModel modelo;
 
+    // Botones como los tenías
     private JButton btnNuevo, btnEditar, btnPass, btnActivar, btnDesactivar, btnRefrescar;
 
     public UsuariosPanel() {
@@ -27,12 +29,11 @@ public class UsuariosPanel extends JPanel {
         title.setBorder(BorderFactory.createEmptyBorder(0,0,12,0));
         add(title, BorderLayout.NORTH);
 
+        // ===== Botones (igual que antes) =====
         modelo = new UsuarioTableModel();
         tabla = new JTable(modelo);
-        tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane sp = new JScrollPane(tabla);
 
-        // Botones
         btnNuevo = new JButton("Nuevo");
         btnEditar = new JButton("Editar");
         btnPass = new JButton("Cambiar contraseña");
@@ -48,13 +49,39 @@ public class UsuariosPanel extends JPanel {
         acciones.add(btnDesactivar);
         acciones.add(btnRefrescar);
 
-        JPanel center = new JPanel(new BorderLayout());
-        center.add(acciones, BorderLayout.NORTH);
-        center.add(sp, BorderLayout.CENTER);
+        JPanel north = new JPanel(new BorderLayout());
+        north.add(title, BorderLayout.NORTH);
+        north.add(acciones, BorderLayout.CENTER);
+        remove(title); // ya lo ponemos dentro de 'north'
+        add(north, BorderLayout.NORTH);
 
-        add(center, BorderLayout.CENTER);
+        add(sp, BorderLayout.CENTER);
 
-        // Eventos de botones
+        // ===== SOLO ESTÉTICA DE TABLA =====
+        tabla.setRowHeight(36);
+        tabla.setFillsViewportHeight(true);
+        tabla.setAutoCreateRowSorter(true);
+        tabla.getTableHeader().setReorderingAllowed(false);
+        tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
+
+        SwingUtilities.invokeLater(() -> {
+            var cols = tabla.getColumnModel();
+            if (cols.getColumnCount() >= 5) {
+                cols.getColumn(0).setPreferredWidth(60);   // ID
+                cols.getColumn(1).setPreferredWidth(160);  // Nombre
+                cols.getColumn(2).setPreferredWidth(220);  // Email
+                cols.getColumn(3).setPreferredWidth(140);  // Rol
+                cols.getColumn(4).setPreferredWidth(90);   // Activo
+
+                cols.getColumn(0).setCellRenderer(center); // ID centrado
+                cols.getColumn(4).setCellRenderer(center); // Activo centrado
+            }
+        });
+
+        // ===== Eventos (igual que antes) =====
         btnRefrescar.addActionListener(e -> cargarUsuarios());
         btnNuevo.addActionListener(e -> onNuevo());
         btnEditar.addActionListener(e -> onEditar());
@@ -74,7 +101,8 @@ public class UsuariosPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Selecciona un usuario primero.");
             return null;
         }
-        return modelo.getAt(row);
+        int modelRow = tabla.convertRowIndexToModel(row);
+        return modelo.getAt(modelRow);
     }
 
     private void onNuevo() {

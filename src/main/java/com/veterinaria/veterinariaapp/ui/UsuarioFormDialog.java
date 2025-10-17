@@ -42,12 +42,12 @@ public class UsuarioFormDialog extends JDialog {
         chkActivo = new JCheckBox("Activo", true);
         cboRol = new JComboBox<>();
 
-        form.add(new JLabel("Nombre:")); form.add(txtNombre);
-        form.add(new JLabel("Email:")); form.add(txtEmail);
-        form.add(new JLabel(usuario == null ? "Contraseña:" : "Contraseña (solo al crear):"));
+        form.add(new JLabel("  Nombre:")); form.add(txtNombre);
+        form.add(new JLabel("  Email:")); form.add(txtEmail);
+        form.add(new JLabel(usuario == null ? "  Contraseña:" : "  Contraseña (solo al crear):"));
         form.add(txtPass);
-        form.add(new JLabel("Rol:")); form.add(cboRol);
-        form.add(new JLabel("Estado:")); form.add(chkActivo);
+        form.add(new JLabel("  Rol:")); form.add(cboRol);
+        form.add(new JLabel("  Estado:")); form.add(chkActivo);
 
         JButton btnGuardar = new JButton("Guardar");
         JButton btnCancelar = new JButton("Cancelar");

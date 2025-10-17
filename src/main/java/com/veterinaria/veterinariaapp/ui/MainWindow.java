@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class MainWindow extends JFrame {
 
-    // ===== Datos fijos por ahora (sin medicamentos) =====
+    // ===== KPIs demo (puedes reemplazar por datos reales) =====
     private int kpiCitas = 3, kpiMascotas = 15, kpiClientes = 10;
     private Map<String,Integer> citasPorDia = Map.of("26/3",1,"27/3",1,"28/3",1);
     private Map<String,Integer> especies = new LinkedHashMap<>() {{
@@ -27,15 +27,58 @@ public class MainWindow extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
+        // Barra lateral + menú superior
         add(buildSidebar(), BorderLayout.WEST);
+        setJMenuBar(buildMenuBar());
 
         // Vistas
         content.add(buildDashboard(), "dashboard");
         content.add(new UsuariosPanel(), "usuarios");
-        content.add(buildClientesWrapper(), "clientes"); // embebe ClienteViewForm
+        content.add(buildClientesWrapper(), "clientes");
+        content.add(buildMascotasWrapper(), "mascotas");
         add(content, BorderLayout.CENTER);
 
         cards.show(content, "dashboard");
+    }
+
+    // ==== MENÚ SUPERIOR (estilo compañero) ====
+    private JMenuBar buildMenuBar() {
+        JMenuBar bar = new JMenuBar();
+
+        JMenu mArchivo = new JMenu("Archivo");
+        JMenuItem miCerrarSesion = new JMenuItem("Cerrar Sesión");
+        JMenuItem miSalir        = new JMenuItem("Salir");
+        mArchivo.add(miCerrarSesion);
+        mArchivo.add(miSalir);
+
+        JMenu mModulos = new JMenu("Módulos");
+        JMenuItem miClientes = new JMenuItem("Clientes");
+        JMenuItem miMascotas = new JMenuItem("Mascotas");
+        JMenuItem miCitas    = new JMenuItem("Citas");
+        mModulos.add(miClientes);
+        mModulos.add(miMascotas);
+        mModulos.add(miCitas);
+
+        bar.add(mArchivo);
+        bar.add(mModulos);
+
+        // Acciones
+        miCerrarSesion.addActionListener(e -> {
+            SessionManager.get().logout();
+            JOptionPane.showMessageDialog(this, "Sesión cerrada.");
+            new LoginFrame().setVisible(true);
+            dispose();
+        });
+        miSalir.addActionListener(e -> System.exit(0));
+        miClientes.addActionListener(e -> cards.show(content, "clientes"));
+        miMascotas.addActionListener(e -> cards.show(content, "mascotas"));
+        miCitas.addActionListener(e -> JOptionPane.showMessageDialog(this, "Módulo Citas (pendiente)"));
+
+        // Atajos
+        miCerrarSesion.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_L, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        miSalir.setAccelerator       (KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Q, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+
+        return bar;
     }
 
     // ==== MENÚ LATERAL ====
@@ -58,9 +101,9 @@ public class MainWindow extends JFrame {
 
         JButton btnInicio    = mkNav("Inicio");
         JButton btnUsuarios  = mkNav("Usuarios");
-        JButton btnCitas     = mkNav("Citas");     // pendiente
-        JButton btnClientes  = mkNav("Clientes");  // embebido
-        JButton btnMascotas  = mkNav("Mascotas");  // pendiente
+        JButton btnCitas     = mkNav("Citas");
+        JButton btnClientes  = mkNav("Clientes");
+        JButton btnMascotas  = mkNav("Mascotas");
         JButton btnCerrar    = mkNav("Cerrar sesión");
 
         menu.add(btnInicio);
@@ -76,12 +119,12 @@ public class MainWindow extends JFrame {
         south.add(btnCerrar, BorderLayout.SOUTH);
         side.add(south, BorderLayout.SOUTH);
 
-        // acciones (cambiar vista en el mismo frame)
+        // Acciones
         btnInicio.addActionListener(e -> cards.show(content, "dashboard"));
         btnUsuarios.addActionListener(e -> cards.show(content, "usuarios"));
         btnClientes.addActionListener(e -> cards.show(content, "clientes"));
         btnCitas.addActionListener(e -> JOptionPane.showMessageDialog(this, "Módulo Citas (pendiente)"));
-        btnMascotas.addActionListener(e -> JOptionPane.showMessageDialog(this, "Módulo Mascotas (pendiente)"));
+        btnMascotas.addActionListener(e -> cards.show(content, "mascotas"));
         btnCerrar.addActionListener(e -> {
             SessionManager.get().logout();
             JOptionPane.showMessageDialog(this, "Sesión cerrada.");
@@ -161,16 +204,23 @@ public class MainWindow extends JFrame {
         return panel;
     }
 
-    // ==== Wrapper para CLIENTES (embebe el contenido del JFrame existente) ====
+    // ==== Wrapper CLIENTES (embebe tu JFrame existente) ====
     private JComponent buildClientesWrapper() {
         JPanel wrapper = new JPanel(new BorderLayout());
-        // Instancia el JFrame, usa su contenido y NO lo muestres como ventana
         ClienteViewForm frame = new ClienteViewForm();
         wrapper.add(frame.getContentPane(), BorderLayout.CENTER);
         return wrapper;
     }
 
-    // ==== Gráficos simples sin librerías ====
+    // ==== Wrapper MASCOTAS ====
+    private JComponent buildMascotasWrapper() {
+        JPanel wrapper = new JPanel(new BorderLayout());
+        MascotaViewForm frame = new MascotaViewForm();
+        wrapper.add(frame.getContentPane(), BorderLayout.CENTER);
+        return wrapper;
+    }
+
+    // ==== Gráficos sin librerías ====
     static class BarChartPanel extends JPanel {
         private final Map<String,Integer> data;
         BarChartPanel(Map<String,Integer> data){ this.data=data; setPreferredSize(new Dimension(420,260)); }

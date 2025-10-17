@@ -13,17 +13,15 @@ import java.util.List;
 
 public class ClienteViewForm extends JFrame {
 
-    // DAO y modelo
-    private final ClienteDao dao = new ClienteDao(); // Debe existir con: listar(), registrar(c), actualizar(c), eliminar(id)
+    private final ClienteDao dao = new ClienteDao();
     private final ClienteTableModel model = new ClienteTableModel(new ArrayList<>());
 
-    // UI
     private JTable tabla;
     private JButton btnAgregar;
 
     public ClienteViewForm() {
         setTitle("Clientes");
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE); // importante para embebido
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setSize(900, 600);
         setLocationRelativeTo(null);
 
@@ -33,12 +31,10 @@ public class ClienteViewForm extends JFrame {
     }
 
     private void initUI() {
-        // Título
         JLabel lbl = new JLabel("Clientes");
         lbl.setFont(lbl.getFont().deriveFont(Font.BOLD, 22f));
-        lbl.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        lbl.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
 
-        // Botón agregar
         btnAgregar = new JButton("Agregar Cliente");
         btnAgregar.addActionListener(e -> mostrarDialogoAgregar());
 
@@ -48,13 +44,11 @@ public class ClienteViewForm extends JFrame {
         right.add(btnAgregar);
         north.add(right, BorderLayout.EAST);
 
-        // Tabla
         tabla = new JTable(model);
         JScrollPane sp = new JScrollPane(tabla);
 
-        // Layout principal
-        JPanel root = new JPanel(new BorderLayout(8, 8));
-        root.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        JPanel root = new JPanel(new BorderLayout(8,8));
+        root.setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
         root.add(north, BorderLayout.NORTH);
         root.add(sp, BorderLayout.CENTER);
 
@@ -68,23 +62,21 @@ public class ClienteViewForm extends JFrame {
         tabla.getTableHeader().setReorderingAllowed(false);
         tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // Centrar ID y Teléfono
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
 
         var cols = tabla.getColumnModel();
         if (cols.getColumnCount() >= 6) {
-            cols.getColumn(0).setPreferredWidth(60);   // ID
-            cols.getColumn(1).setPreferredWidth(140);  // Nombre
-            cols.getColumn(2).setPreferredWidth(140);  // Apellido
-            cols.getColumn(3).setPreferredWidth(260);  // Dirección
-            cols.getColumn(4).setPreferredWidth(120);  // Teléfono
-            cols.getColumn(5).setPreferredWidth(180);  // Acciones
+            cols.getColumn(0).setPreferredWidth(60);
+            cols.getColumn(1).setPreferredWidth(140);
+            cols.getColumn(2).setPreferredWidth(140);
+            cols.getColumn(3).setPreferredWidth(260);
+            cols.getColumn(4).setPreferredWidth(120);
+            cols.getColumn(5).setPreferredWidth(180);
 
             cols.getColumn(0).setCellRenderer(center);
             cols.getColumn(4).setCellRenderer(center);
 
-            // Columna Acciones con renderer + editor (editar/eliminar)
             int colAcciones = tabla.getColumnModel().getColumnIndex("Acciones");
             var accionesCol = tabla.getColumnModel().getColumn(colAcciones);
             accionesCol.setMinWidth(160);
@@ -100,16 +92,11 @@ public class ClienteViewForm extends JFrame {
             model.setData(lista);
         } catch (Exception ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Error al cargar clientes: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            JOptionPane.showMessageDialog(this, "Error al cargar clientes: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // ============ Diálogo: Agregar ============
     private void mostrarDialogoAgregar() {
         JDialog dlg = new JDialog(this, "Agregar Cliente", true);
         dlg.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -153,12 +140,10 @@ public class ClienteViewForm extends JFrame {
             String telefono  = txtTelefono.getText().trim();
 
             if (nombre.isEmpty() || apellido.isEmpty()) {
-                JOptionPane.showMessageDialog(dlg,
-                        "Nombre y Apellido son obligatorios.",
+                JOptionPane.showMessageDialog(dlg, "Nombre y Apellido son obligatorios.",
                         "Validación", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-
             try {
                 Cliente c = new Cliente(nombre, apellido, direccion, telefono);
                 dao.registrar(c);
@@ -167,8 +152,7 @@ public class ClienteViewForm extends JFrame {
                 dlg.dispose();
             } catch (Exception ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(dlg,
-                        "Error al guardar: " + ex.getMessage(),
+                JOptionPane.showMessageDialog(dlg, "Error al guardar: " + ex.getMessage(),
                         "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
@@ -179,7 +163,6 @@ public class ClienteViewForm extends JFrame {
         dlg.setVisible(true);
     }
 
-    // ============ Diálogo: Editar ============
     private void mostrarDialogoEditar(Cliente c) {
         JDialog dlg = new JDialog(this, "Editar Cliente", true);
         dlg.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -211,12 +194,11 @@ public class ClienteViewForm extends JFrame {
         JButton btnGuardar  = new JButton("Guardar");
         JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         botones.add(btnCancelar); botones.add(btnGuardar);
-
         row++; g.gridx=0; g.gridy=row; g.gridwidth=2; content.add(botones, g);
 
         btnCancelar.addActionListener(e -> dlg.dispose());
         btnGuardar.addActionListener(e -> {
-            String nombre   = txtNombre.getText().trim();
+            String nombre = txtNombre.getText().trim();
             String apellido = txtApellido.getText().trim();
             if (nombre.isEmpty() || apellido.isEmpty()) {
                 JOptionPane.showMessageDialog(dlg, "Nombre y Apellido son obligatorios.");
@@ -244,7 +226,7 @@ public class ClienteViewForm extends JFrame {
         dlg.setVisible(true);
     }
 
-    // ====== Renderer acciones (ver solo) ======
+    // ====== Renderer acciones (ver) ======
     private static class AccionesRenderer extends JPanel implements TableCellRenderer {
         private final JButton btnEdit = new JButton("Editar");
         private final JButton btnDel  = new JButton("Eliminar");
@@ -265,7 +247,7 @@ public class ClienteViewForm extends JFrame {
         }
     }
 
-    // ====== Editor acciones (con lógica editar/eliminar) ======
+    // ====== Editor acciones (lógica editar/eliminar) ======
     private class AccionesEditor extends AbstractCellEditor implements TableCellEditor {
         private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
         private final JButton btnEdit = new JButton("Editar");
@@ -316,13 +298,13 @@ public class ClienteViewForm extends JFrame {
         @Override public Component getTableCellEditorComponent(JTable table, Object value,
                                                                boolean isSelected, int row, int column) {
             editingRow = row;
+            tabla = table;
             panel.setBackground(table.getSelectionBackground());
             return panel;
         }
         @Override public Object getCellEditorValue() { return null; }
     }
 
-    // Ejecutable independiente (opcional)
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new ClienteViewForm().setVisible(true));
     }
