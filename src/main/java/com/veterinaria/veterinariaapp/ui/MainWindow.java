@@ -24,7 +24,7 @@ public class MainWindow extends JFrame {
     private MascotaViewForm mascotaView;
 
     public MainWindow() {
-        setTitle("Veterinari — Panel Principal");
+        setTitle("Veterinario — Panel Principal");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1100, 700);
         setLocationRelativeTo(null);

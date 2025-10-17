@@ -137,22 +137,30 @@ public class CitaRepository {
         }
     }
     
-    /**
-     * Verifica si ya existe una cita programada que comience en el mismo minuto.
-     * Ignora los segundos y milisegundos para evitar falsos negativos.
+/**
+     * Verifica si existe una cita conflictiva en la misma fecha y minuto.
+     * Puede excluir una cita específica de la búsqueda (útil al editar).
      * @param fechaHora La fecha y hora a verificar.
-     * @return true si ya existe una cita, false en caso contrario.
+     * @param idCitaAExcluir El ID de la cita a ignorar en la búsqueda, o null si es una nueva cita.
+     * @return true si se encuentra un conflicto, false en caso contrario.
      * @throws Exception si ocurre un error de SQL.
      */
-    public boolean existeCitaEnHora(LocalDateTime fechaHora) throws Exception {
-        // SQL para buscar citas que caen en el mismo minuto.
-        // TRUNCATE elimina los segundos/milisegundos para una comparación precisa.
-        String sql = "SELECT COUNT(*) FROM citas WHERE DATE_FORMAT(fecha_hora, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i')";
-        
+    public boolean existeCitaConflictiva(LocalDateTime fechaHora, Integer idCitaAExcluir) throws Exception {
+        // Construimos la consulta base
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM citas WHERE DATE_FORMAT(fecha_hora, '%Y-%m-%d %H:%i') = DATE_FORMAT(?, '%Y-%m-%d %H:%i')");
+
+        // Si estamos editando, añadimos una condición para excluir la propia cita
+        if (idCitaAExcluir != null) {
+            sql.append(" AND id != ?");
+        }
+
         try (Connection cn = Db.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
+             PreparedStatement ps = cn.prepareStatement(sql.toString())) {
             
             ps.setTimestamp(1, Timestamp.valueOf(fechaHora));
+            if (idCitaAExcluir != null) {
+                ps.setInt(2, idCitaAExcluir);
+            }
             
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {

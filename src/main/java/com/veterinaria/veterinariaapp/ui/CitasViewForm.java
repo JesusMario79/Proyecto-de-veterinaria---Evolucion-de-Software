@@ -219,7 +219,7 @@ public class CitasViewForm extends JFrame {
                 }
 
                 // 2.B. Validar que no haya otra cita a la misma hora
-                if (citaRepository.existeCitaEnHora(fechaHora)) {
+                if (citaRepository.existeCitaConflictiva(fechaHora, null)) {
                     JOptionPane.showMessageDialog(dialogo, "Ya existe una cita programada para esa fecha y hora.", "Conflicto de Horario", JOptionPane.ERROR_MESSAGE);
                     return; // Detiene el proceso
                 }
@@ -346,6 +346,19 @@ public class CitasViewForm extends JFrame {
                 LocalDateTime fechaHora = new java.sql.Timestamp(fecha.getTime()).toLocalDateTime()
                                             .withHour(Integer.parseInt(horaMin[0]))
                                             .withMinute(Integer.parseInt(horaMin[1]));
+                
+                
+                // 2.A. Validar que la cita no sea en el pasado
+                if (fechaHora.isBefore(LocalDateTime.now())) {
+                    JOptionPane.showMessageDialog(dialogo, "No se puede agendar una cita en una fecha u hora pasada.", "Validación", JOptionPane.ERROR_MESSAGE);
+                    return; // Detiene el proceso
+                }
+
+                // 2.B. Validar que no haya otra cita a la misma hora (excluyendo la actual)
+                if (citaRepository.existeCitaConflictiva(fechaHora, cita.getId())) {
+                    JOptionPane.showMessageDialog(dialogo, "Ya existe otra cita programada para esa fecha y hora.", "Conflicto de Horario", JOptionPane.ERROR_MESSAGE);
+                    return; // Detiene el proceso
+                }
 
                 // ===================================================================
                 //  PUNTO CLAVE 2: ACTUALIZAR EL OBJETO CITA Y LLAMAR A `actualizar`
