@@ -16,7 +16,7 @@ public class MainWindow extends JFrame {
         put("Perro",40); put("Gato",25); put("Conejo",15); put("Hamster",10); put("Pájaro",10);
     }};
 
-    // CardLayout central
+    // Card central
     private final CardLayout cards = new CardLayout();
     private final JPanel content = new JPanel(cards);
 
@@ -32,13 +32,13 @@ public class MainWindow extends JFrame {
         // Vistas
         content.add(buildDashboard(), "dashboard");
         content.add(new UsuariosPanel(), "usuarios");
+        content.add(buildClientesWrapper(), "clientes"); // embebe ClienteViewForm
         add(content, BorderLayout.CENTER);
 
-        // Vista por defecto
         cards.show(content, "dashboard");
     }
 
-    // ==== MENÚ LATERAL (sin Medicamentos) ====
+    // ==== MENÚ LATERAL ====
     private JComponent buildSidebar() {
         JPanel side = new JPanel(new BorderLayout());
         side.setPreferredSize(new Dimension(200, getHeight()));
@@ -58,9 +58,9 @@ public class MainWindow extends JFrame {
 
         JButton btnInicio    = mkNav("Inicio");
         JButton btnUsuarios  = mkNav("Usuarios");
-        JButton btnCitas     = mkNav("Citas");
-        JButton btnClientes  = mkNav("Clientes");
-        JButton btnMascotas  = mkNav("Mascotas");
+        JButton btnCitas     = mkNav("Citas");     // pendiente
+        JButton btnClientes  = mkNav("Clientes");  // embebido
+        JButton btnMascotas  = mkNav("Mascotas");  // pendiente
         JButton btnCerrar    = mkNav("Cerrar sesión");
 
         menu.add(btnInicio);
@@ -76,11 +76,11 @@ public class MainWindow extends JFrame {
         south.add(btnCerrar, BorderLayout.SOUTH);
         side.add(south, BorderLayout.SOUTH);
 
-        // acciones: CAMBIAN LA VISTA EN EL MISMO FRAME
+        // acciones (cambiar vista en el mismo frame)
         btnInicio.addActionListener(e -> cards.show(content, "dashboard"));
         btnUsuarios.addActionListener(e -> cards.show(content, "usuarios"));
+        btnClientes.addActionListener(e -> cards.show(content, "clientes"));
         btnCitas.addActionListener(e -> JOptionPane.showMessageDialog(this, "Módulo Citas (pendiente)"));
-        btnClientes.addActionListener(e -> JOptionPane.showMessageDialog(this, "Módulo Clientes (pendiente)"));
         btnMascotas.addActionListener(e -> JOptionPane.showMessageDialog(this, "Módulo Mascotas (pendiente)"));
         btnCerrar.addActionListener(e -> {
             SessionManager.get().logout();
@@ -104,7 +104,7 @@ public class MainWindow extends JFrame {
         return b;
     }
 
-    // ==== DASHBOARD (3 KPIs) ====
+    // ==== Dashboard (KPIs + charts) ====
     private JComponent buildDashboard() {
         JPanel root = new JPanel(new BorderLayout());
         root.setBorder(BorderFactory.createEmptyBorder(16,16,16,16));
@@ -161,6 +161,15 @@ public class MainWindow extends JFrame {
         return panel;
     }
 
+    // ==== Wrapper para CLIENTES (embebe el contenido del JFrame existente) ====
+    private JComponent buildClientesWrapper() {
+        JPanel wrapper = new JPanel(new BorderLayout());
+        // Instancia el JFrame, usa su contenido y NO lo muestres como ventana
+        ClienteViewForm frame = new ClienteViewForm();
+        wrapper.add(frame.getContentPane(), BorderLayout.CENTER);
+        return wrapper;
+    }
+
     // ==== Gráficos simples sin librerías ====
     static class BarChartPanel extends JPanel {
         private final Map<String,Integer> data;
@@ -210,7 +219,6 @@ public class MainWindow extends JFrame {
         }
     }
 
-    // Demo standalone
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new MainWindow().setVisible(true));
     }
