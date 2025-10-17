@@ -9,7 +9,7 @@ public class Db {
     private static final String URL  =
         "jdbc:mysql://localhost:3306/veterinaria_db?useSSL=false&serverTimezone=UTC";
     private static final String USER = "root";                // cámbiar nombre de base de datos
-    private static final String PASS = "password2424";      // tu contraseña
+    private static final String PASS = "root";      // tu contraseña
 
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASS);

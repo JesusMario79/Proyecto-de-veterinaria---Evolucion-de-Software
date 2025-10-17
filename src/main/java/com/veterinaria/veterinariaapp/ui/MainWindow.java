@@ -19,6 +19,9 @@ public class MainWindow extends JFrame {
     // Card central
     private final CardLayout cards = new CardLayout();
     private final JPanel content = new JPanel(cards);
+    private CitasViewForm citasView; 
+    private ClienteViewForm clienteView;
+    private MascotaViewForm mascotaView;
 
     public MainWindow() {
         setTitle("Veterinari — Panel Principal");
@@ -36,6 +39,7 @@ public class MainWindow extends JFrame {
         content.add(new UsuariosPanel(), "usuarios");
         content.add(buildClientesWrapper(), "clientes");
         content.add(buildMascotasWrapper(), "mascotas");
+        content.add(buildCitasWrapper(), "citas");
         add(content, BorderLayout.CENTER);
 
         cards.show(content, "dashboard");
@@ -70,9 +74,21 @@ public class MainWindow extends JFrame {
             dispose();
         });
         miSalir.addActionListener(e -> System.exit(0));
-        miClientes.addActionListener(e -> cards.show(content, "clientes"));
-        miMascotas.addActionListener(e -> cards.show(content, "mascotas"));
-        miCitas.addActionListener(e -> JOptionPane.showMessageDialog(this, "Módulo Citas (pendiente)"));
+        
+        miClientes.addActionListener(e -> {
+            cards.show(content, "clientes");
+            clienteView.recargarTabla();
+        });
+        
+        miMascotas.addActionListener(e -> {
+            cards.show(content, "mascotas");
+            mascotaView.recargarTabla();
+        });
+
+        miCitas.addActionListener(e -> {
+            cards.show(content, "citas");
+            citasView.recargarTabla();
+        });
 
         // Atajos
         miCerrarSesion.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_L, java.awt.event.InputEvent.CTRL_DOWN_MASK));
@@ -122,9 +138,22 @@ public class MainWindow extends JFrame {
         // Acciones
         btnInicio.addActionListener(e -> cards.show(content, "dashboard"));
         btnUsuarios.addActionListener(e -> cards.show(content, "usuarios"));
-        btnClientes.addActionListener(e -> cards.show(content, "clientes"));
-        btnCitas.addActionListener(e -> JOptionPane.showMessageDialog(this, "Módulo Citas (pendiente)"));
-        btnMascotas.addActionListener(e -> cards.show(content, "mascotas"));
+        
+        btnClientes.addActionListener(e -> {
+            cards.show(content, "clientes");
+            clienteView.recargarTabla();
+        });
+        
+        btnCitas.addActionListener(e -> {
+            cards.show(content, "citas");
+            citasView.recargarTabla();
+        });
+        
+        btnMascotas.addActionListener(e -> {
+            cards.show(content, "mascotas");
+            mascotaView.recargarTabla();
+        });
+        
         btnCerrar.addActionListener(e -> {
             SessionManager.get().logout();
             JOptionPane.showMessageDialog(this, "Sesión cerrada.");
@@ -207,16 +236,30 @@ public class MainWindow extends JFrame {
     // ==== Wrapper CLIENTES (embebe tu JFrame existente) ====
     private JComponent buildClientesWrapper() {
         JPanel wrapper = new JPanel(new BorderLayout());
-        ClienteViewForm frame = new ClienteViewForm();
-        wrapper.add(frame.getContentPane(), BorderLayout.CENTER);
+        
+        clienteView = new ClienteViewForm();
+        
+        wrapper.add(clienteView.getContentPane(), BorderLayout.CENTER);
         return wrapper;
     }
 
     // ==== Wrapper MASCOTAS ====
     private JComponent buildMascotasWrapper() {
         JPanel wrapper = new JPanel(new BorderLayout());
-        MascotaViewForm frame = new MascotaViewForm();
-        wrapper.add(frame.getContentPane(), BorderLayout.CENTER);
+        
+        mascotaView = new MascotaViewForm();
+        
+        wrapper.add(mascotaView.getContentPane(), BorderLayout.CENTER);
+        return wrapper;
+    }
+    
+    private JComponent buildCitasWrapper() {
+        JPanel wrapper = new JPanel(new BorderLayout());
+
+        // En lugar de una variable local, usamos la variable de instancia
+        citasView = new CitasViewForm(); 
+
+        wrapper.add(citasView.getContentPane(), BorderLayout.CENTER);
         return wrapper;
     }
 

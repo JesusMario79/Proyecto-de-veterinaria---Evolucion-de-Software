@@ -86,7 +86,7 @@ public class ClienteViewForm extends JFrame {
         }
     }
 
-    private void recargarTabla() {
+    public void recargarTabla() {
         try {
             List<Cliente> lista = dao.listar();
             model.setData(lista);

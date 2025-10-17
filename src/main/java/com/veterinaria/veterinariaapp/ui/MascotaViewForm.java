@@ -126,7 +126,7 @@ public class MascotaViewForm extends JFrame {
         sorter.sort();
     }
 
-    private void recargarTabla() {
+    public void recargarTabla() {
         try {
             var datos = mascotaRepo.listar();
             model.setData(datos);
