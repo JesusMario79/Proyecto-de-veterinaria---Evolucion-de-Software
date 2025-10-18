@@ -1,7 +1,12 @@
 package com.veterinaria.veterinariaapp.ui;
 
-import com.veterinaria.veterinariaapp.dao.ClienteDao;
+// ¡CAMBIOS EN IMPORTS!
+// import com.veterinaria.veterinariaapp.dao.ClienteDao; // <-- ELIMINADO
 import com.veterinaria.veterinariaapp.model.Cliente;
+import com.veterinaria.veterinariaapp.service.ClienteService; // <-- AÑADIDO
+import com.veterinaria.veterinariaapp.repository.ClienteRepository; // Para el 'main'
+import com.veterinaria.veterinariaapp.repository.IClienteRepository; // Para el 'main'
+
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -13,13 +18,17 @@ import java.util.List;
 
 public class ClienteViewForm extends JFrame {
 
-    private final ClienteDao dao = new ClienteDao();
+    // ¡CORREGIDO!
+    private final ClienteService clienteService; // <-- AÑADIDO
     private final ClienteTableModel model = new ClienteTableModel(new ArrayList<>());
 
     private JTable tabla;
     private JButton btnAgregar;
 
-    public ClienteViewForm() {
+    // ¡CORREGIDO! (Recibe el servicio)
+    public ClienteViewForm(ClienteService clienteService) {
+        this.clienteService = clienteService; 
+
         setTitle("Clientes");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setSize(900, 600);
@@ -31,49 +40,43 @@ public class ClienteViewForm extends JFrame {
     }
 
     private void initUI() {
+        // (Este método no cambia)
         JLabel lbl = new JLabel("Clientes");
         lbl.setFont(lbl.getFont().deriveFont(Font.BOLD, 22f));
         lbl.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
-
         btnAgregar = new JButton("Agregar Cliente");
         btnAgregar.addActionListener(e -> mostrarDialogoAgregar());
-
         JPanel north = new JPanel(new BorderLayout());
         north.add(lbl, BorderLayout.WEST);
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         right.add(btnAgregar);
         north.add(right, BorderLayout.EAST);
-
         tabla = new JTable(model);
         JScrollPane sp = new JScrollPane(tabla);
-
         JPanel root = new JPanel(new BorderLayout(8,8));
         root.setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
         root.add(north, BorderLayout.NORTH);
         root.add(sp, BorderLayout.CENTER);
-
         setContentPane(root);
     }
 
     private void configurarTabla() {
+        // (Este método no cambia)
         tabla.setRowHeight(36);
         tabla.setFillsViewportHeight(true);
         tabla.setAutoCreateRowSorter(true);
         tabla.getTableHeader().setReorderingAllowed(false);
         tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(SwingConstants.CENTER);
-
         var cols = tabla.getColumnModel();
-        if (cols.getColumnCount() >= 6) {
+        if (cols.getColumnCount() > ClienteTableModel.COL_ACCIONES) {
             cols.getColumn(0).setPreferredWidth(60);
             cols.getColumn(1).setPreferredWidth(140);
             cols.getColumn(2).setPreferredWidth(140);
             cols.getColumn(3).setPreferredWidth(260);
             cols.getColumn(4).setPreferredWidth(120);
-            cols.getColumn(5).setPreferredWidth(180);
-
+            
             cols.getColumn(0).setCellRenderer(center);
             cols.getColumn(4).setCellRenderer(center);
 
@@ -88,8 +91,10 @@ public class ClienteViewForm extends JFrame {
 
     public void recargarTabla() {
         try {
-            List<Cliente> lista = dao.listar();
+            // ¡CORREGIDO!
+            List<Cliente> lista = clienteService.listarClientes(); // Llama al servicio
             model.setData(lista);
+            configurarTabla(); 
         } catch (Exception ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error al cargar clientes: " + ex.getMessage(),
@@ -99,58 +104,54 @@ public class ClienteViewForm extends JFrame {
 
     private void mostrarDialogoAgregar() {
         JDialog dlg = new JDialog(this, "Agregar Cliente", true);
+        // (El layout del diálogo no cambia)
         dlg.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-
         JTextField txtNombre    = new JTextField(22);
         JTextField txtApellido  = new JTextField(22);
         JTextField txtDireccion = new JTextField(26);
         JTextField txtTelefono  = new JTextField(14);
-
         JPanel content = new JPanel(new GridBagLayout());
         GridBagConstraints g = new GridBagConstraints();
         g.insets = new Insets(8, 10, 8, 10);
         g.fill = GridBagConstraints.HORIZONTAL;
-
         int row = 0;
         g.gridx=0; g.gridy=row; content.add(new JLabel("Nombre:"), g);
         g.gridx=1; g.weightx=1; content.add(txtNombre, g);
-
         row++; g.gridx=0; g.gridy=row; g.weightx=0; content.add(new JLabel("Apellido:"), g);
         g.gridx=1; g.weightx=1; content.add(txtApellido, g);
-
         row++; g.gridx=0; g.gridy=row; g.weightx=0; content.add(new JLabel("Dirección:"), g);
         g.gridx=1; g.weightx=1; content.add(txtDireccion, g);
-
         row++; g.gridx=0; g.gridy=row; g.weightx=0; content.add(new JLabel("Teléfono:"), g);
         g.gridx=1; g.weightx=1; content.add(txtTelefono, g);
-
         JButton btnCancelar = new JButton("Cancelar");
         JButton btnAgregar  = new JButton("Agregar");
         JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         botones.add(btnCancelar); botones.add(btnAgregar);
-
         row++; g.gridx=0; g.gridy=row; g.gridwidth=2; g.weightx=1;
         content.add(botones, g);
 
         btnCancelar.addActionListener(e -> dlg.dispose());
+        
+        // ¡LÓGICA DE BOTÓN CORREGIDA!
         btnAgregar.addActionListener(e -> {
             String nombre    = txtNombre.getText().trim();
             String apellido  = txtApellido.getText().trim();
             String direccion = txtDireccion.getText().trim();
             String telefono  = txtTelefono.getText().trim();
-
-            if (nombre.isEmpty() || apellido.isEmpty()) {
-                JOptionPane.showMessageDialog(dlg, "Nombre y Apellido son obligatorios.",
-                        "Validación", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
+            
             try {
                 Cliente c = new Cliente(nombre, apellido, direccion, telefono);
-                dao.registrar(c);
+                
+                // Delegar Lógica de Negocio y Guardado al Servicio
+                clienteService.agregarCliente(c); // <-- SRP y DIP
+                
                 recargarTabla();
                 JOptionPane.showMessageDialog(this, "Cliente agregado.");
                 dlg.dispose();
-            } catch (Exception ex) {
+                
+            } catch (IllegalArgumentException ex) { // Errores de NEGOCIO
+                JOptionPane.showMessageDialog(dlg, ex.getMessage(), "Validación", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception ex) { // Errores de BD
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(dlg, "Error al guardar: " + ex.getMessage(),
                         "Error", JOptionPane.ERROR_MESSAGE);
@@ -165,55 +166,55 @@ public class ClienteViewForm extends JFrame {
 
     private void mostrarDialogoEditar(Cliente c) {
         JDialog dlg = new JDialog(this, "Editar Cliente", true);
+        // (El layout del diálogo no cambia)
         dlg.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-
         JTextField txtNombre    = new JTextField(c.getNombre(), 22);
         JTextField txtApellido  = new JTextField(c.getApellido(), 22);
         JTextField txtDireccion = new JTextField(c.getDireccion(), 26);
         JTextField txtTelefono  = new JTextField(c.getTelefono(), 14);
-
         JPanel content = new JPanel(new GridBagLayout());
         GridBagConstraints g = new GridBagConstraints();
         g.insets = new Insets(8, 10, 8, 10);
         g.fill = GridBagConstraints.HORIZONTAL;
-
         int row = 0;
         g.gridx=0; g.gridy=row; content.add(new JLabel("Nombre:"), g);
         g.gridx=1; g.weightx=1; content.add(txtNombre, g);
-
         row++; g.gridx=0; g.gridy=row; g.weightx=0; content.add(new JLabel("Apellido:"), g);
         g.gridx=1; g.weightx=1; content.add(txtApellido, g);
-
         row++; g.gridx=0; g.gridy=row; g.weightx=0; content.add(new JLabel("Dirección:"), g);
         g.gridx=1; g.weightx=1; content.add(txtDireccion, g);
-
         row++; g.gridx=0; g.gridy=row; g.weightx=0; content.add(new JLabel("Teléfono:"), g);
         g.gridx=1; g.weightx=1; content.add(txtTelefono, g);
-
         JButton btnCancelar = new JButton("Cancelar");
         JButton btnGuardar  = new JButton("Guardar");
         JPanel botones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         botones.add(btnCancelar); botones.add(btnGuardar);
         row++; g.gridx=0; g.gridy=row; g.gridwidth=2; content.add(botones, g);
 
+
         btnCancelar.addActionListener(e -> dlg.dispose());
+        
+        // ¡LÓGICA DE BOTÓN CORREGIDA!
         btnGuardar.addActionListener(e -> {
             String nombre = txtNombre.getText().trim();
             String apellido = txtApellido.getText().trim();
-            if (nombre.isEmpty() || apellido.isEmpty()) {
-                JOptionPane.showMessageDialog(dlg, "Nombre y Apellido son obligatorios.");
-                return;
-            }
+
             try {
                 c.setNombre(nombre);
                 c.setApellido(apellido);
                 c.setDireccion(txtDireccion.getText().trim());
                 c.setTelefono(txtTelefono.getText().trim());
-                dao.actualizar(c);
+                
+                // Delegar Lógica de Negocio y Actualización al Servicio
+                clienteService.actualizarCliente(c); // <-- SRP y DIP
+                
                 recargarTabla();
                 JOptionPane.showMessageDialog(this, "Cliente actualizado.");
                 dlg.dispose();
-            } catch (Exception ex) {
+                
+            } catch (IllegalArgumentException ex) { // Errores de NEGOCIO
+                JOptionPane.showMessageDialog(dlg, ex.getMessage(), "Validación", JOptionPane.WARNING_MESSAGE);
+            } catch (Exception ex) { // Errores de BD
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(dlg, "Error al actualizar: " + ex.getMessage(),
                         "Error", JOptionPane.ERROR_MESSAGE);
@@ -228,6 +229,7 @@ public class ClienteViewForm extends JFrame {
 
     // ====== Renderer acciones (ver) ======
     private static class AccionesRenderer extends JPanel implements TableCellRenderer {
+        // (Tu código no cambia)
         private final JButton btnEdit = new JButton("Editar");
         private final JButton btnDel  = new JButton("Eliminar");
         AccionesRenderer() {
@@ -249,20 +251,18 @@ public class ClienteViewForm extends JFrame {
 
     // ====== Editor acciones (lógica editar/eliminar) ======
     private class AccionesEditor extends AbstractCellEditor implements TableCellEditor {
+        // (Tu código de constructor y 'onEditar' no cambia)
         private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
         private final JButton btnEdit = new JButton("Editar");
         private final JButton btnDel  = new JButton("Eliminar");
         private int editingRow = -1;
-
         AccionesEditor() {
             btnEdit.setMargin(new Insets(2,8,2,8));
             btnDel.setMargin(new Insets(2,8,2,8));
             panel.add(btnEdit); panel.add(btnDel);
-
             btnEdit.addActionListener(e -> { onEditar();  fireEditingStopped(); });
             btnDel.addActionListener(e -> { onEliminar(); fireEditingStopped(); });
         }
-
         private void onEditar() {
             if (editingRow < 0) return;
             int modelRow = tabla.convertRowIndexToModel(editingRow);
@@ -270,6 +270,7 @@ public class ClienteViewForm extends JFrame {
             mostrarDialogoEditar(c);
         }
 
+        // ¡LÓGICA DE onEliminar CORREGIDA!
         private void onEliminar() {
             if (editingRow < 0) return;
             int modelRow = tabla.convertRowIndexToModel(editingRow);
@@ -283,10 +284,13 @@ public class ClienteViewForm extends JFrame {
             );
             if (ok == JOptionPane.YES_OPTION) {
                 try {
-                    dao.eliminar(c.getIdCliente());
+                    // Delegar Lógica de Eliminación al Servicio
+                    clienteService.eliminarCliente(c.getIdCliente()); // <-- SRP y DIP
+                    
                     recargarTabla();
                     JOptionPane.showMessageDialog(ClienteViewForm.this, "Cliente eliminado.");
-                } catch (Exception ex) {
+                    
+                } catch (Exception ex) { // Errores de BD
                     ex.printStackTrace();
                     JOptionPane.showMessageDialog(ClienteViewForm.this,
                             "Error al eliminar: " + ex.getMessage(),
@@ -298,14 +302,20 @@ public class ClienteViewForm extends JFrame {
         @Override public Component getTableCellEditorComponent(JTable table, Object value,
                                                                boolean isSelected, int row, int column) {
             editingRow = row;
-            tabla = table;
             panel.setBackground(table.getSelectionBackground());
             return panel;
         }
         @Override public Object getCellEditorValue() { return null; }
     }
 
+    // ¡MAIN DE PRUEBA CORREGIDO!
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new ClienteViewForm().setVisible(true));
+        SwingUtilities.invokeLater(() -> {
+            // --- ¡ENSAMBLAJE DE PRUEBA! ---
+            // Así es como se debe construir esta vista ahora
+            IClienteRepository repo = new ClienteRepository(); 
+            ClienteService service = new ClienteService(repo);
+            new ClienteViewForm(service).setVisible(true);
+        });
     }
 }

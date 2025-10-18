@@ -2,8 +2,13 @@ package com.veterinaria.veterinariaapp.ui;
 
 import com.veterinaria.veterinariaapp.model.Cita;
 import com.veterinaria.veterinariaapp.model.Mascota;
-import com.veterinaria.veterinariaapp.repository.CitaRepository;
+// --- ¡CAMBIOS EN IMPORTS! ---
+// YA NO IMPORTA REPOSITORIOS (excepto para el 'main' de prueba)
+import com.veterinaria.veterinariaapp.repository.CitaRepository; 
+import com.veterinaria.veterinariaapp.repository.IMascotaRepository;
+import com.veterinaria.veterinariaapp.repository.ICitaRepository;
 import com.veterinaria.veterinariaapp.repository.MascotaRepository;
+import com.veterinaria.veterinariaapp.service.CitaService; // <-- IMPORTA EL SERVICIO
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -13,32 +18,29 @@ import java.awt.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-// Importante: Necesitarás la librería JDateChooser. Añade esto a tu pom.xml si aún no está:
-// <dependency>
-//     <groupId>com.toedter</groupId>
-//     <artifactId>jcalendar</artifactId>
-//     <version>1.4</version>
-// </dependency>
 import com.toedter.calendar.JDateChooser;
 import java.time.format.DateTimeFormatter;
 
 
 public class CitasViewForm extends JFrame {
 
-    // --- Repositorios y Modelos de la Vista ---
-    private final CitaRepository citaRepository = new CitaRepository();
-    private final MascotaRepository mascotaRepository = new MascotaRepository(); // Para el ComboBox
+    // --- ¡CORREGIDO! ---
+    // Ya no crea repositorios. Ahora depende de CitaService
+    private final CitaService citaService; // <-- ¡Depende del Servicio!
     private final CitaTableModel tableModel = new CitaTableModel(new ArrayList<>());
 
     // --- Componentes de la UI ---
     private JTable tablaCitas;
     private JButton btnAgendar;
 
-    public CitasViewForm() {
+    // --- ¡CORREGIDO! ---
+    // Recibe el servicio por inyección de dependencia
+    public CitasViewForm(CitaService citaService) {
+        this.citaService = citaService; // <-- Lo recibe aquí
+
         setTitle("Gestión de Citas");
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setSize(1024, 768); // Un poco más grande para las columnas de citas
+        setSize(1024, 768);
         setLocationRelativeTo(null);
 
         initUI();
@@ -85,8 +87,10 @@ public class CitasViewForm extends JFrame {
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
 
-        var cols = tablaCitas.getColumnModel();
-        if (cols.getColumnCount() > CitaTableModel.COL_ACCIONES) {
+        // Esperamos que el TableModel esté listo
+        // (Este chequeo previene errores si el modelo se carga vacío)
+        if (tablaCitas.getColumnModel().getColumnCount() > CitaTableModel.COL_ACCIONES) {
+            var cols = tablaCitas.getColumnModel();
             cols.getColumn(0).setPreferredWidth(40); // ID
             cols.getColumn(1).setPreferredWidth(150); // Fecha y Hora
             cols.getColumn(5).setPreferredWidth(100); // Estado
@@ -107,8 +111,13 @@ public class CitasViewForm extends JFrame {
 
     public void recargarTabla() {
         try {
-            List<Cita> lista = citaRepository.listar();
+            // --- ¡CORREGIDO! ---
+            List<Cita> lista = citaService.listarCitas(); // Llama al servicio
             tableModel.setData(lista);
+            
+            // Re-configuramos la tabla por si era la primera carga
+            configurarTabla(); 
+            
         } catch (Exception ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error al cargar las citas: " + ex.getMessage(),
@@ -124,8 +133,8 @@ public class CitasViewForm extends JFrame {
         // --- Componentes del Formulario ---
         JComboBox<Mascota> cmbMascotas = new JComboBox<>();
         try {
-            // Llenamos el ComboBox con las mascotas existentes
-            mascotaRepository.listar().forEach(cmbMascotas::addItem);
+            // --- ¡CORREGIDO! ---
+            citaService.listarMascotas().forEach(cmbMascotas::addItem); // Llama al servicio
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(dialogo, "No se pudieron cargar las mascotas.", "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -144,31 +153,31 @@ public class CitasViewForm extends JFrame {
 
 
         JDateChooser dateChooser = new JDateChooser();
-        // Placeholder para la hora (se puede mejorar con un JSpinner)
         JTextField txtHora = new JTextField("10:00", 5);
         JTextArea txtMotivo = new JTextArea(4, 25);
         txtMotivo.setLineWrap(true);
         txtMotivo.setWrapStyleWord(true);
         JScrollPane scrollMotivo = new JScrollPane(txtMotivo);
 
-        // --- Layout del Formulario ---
+        // --- Layout del Formulario (No cambia) ---
         JPanel panelContenido = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 10, 8, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-
+        
         int fila = 0;
         gbc.gridx = 0; gbc.gridy = fila; panelContenido.add(new JLabel("Mascota:"), gbc);
         gbc.gridx = 1; gbc.weightx = 1; panelContenido.add(cmbMascotas, gbc);
-
+        
         fila++; gbc.gridx = 0; gbc.gridy = fila; gbc.weightx = 0; panelContenido.add(new JLabel("Fecha:"), gbc);
         gbc.gridx = 1; gbc.weightx = 1; panelContenido.add(dateChooser, gbc);
         
         fila++; gbc.gridx = 0; gbc.gridy = fila; gbc.weightx = 0; panelContenido.add(new JLabel("Hora (HH:mm):"), gbc);
         gbc.gridx = 1; gbc.weightx = 1; panelContenido.add(txtHora, gbc);
-
+        
         fila++; gbc.gridx = 0; gbc.gridy = fila; gbc.weightx = 0; gbc.anchor = GridBagConstraints.NORTH; panelContenido.add(new JLabel("Motivo:"), gbc);
         gbc.gridx = 1; gbc.weightx = 1; gbc.fill = GridBagConstraints.BOTH; gbc.weighty = 1; panelContenido.add(scrollMotivo, gbc);
+
 
         // --- Botones de Acción ---
         JButton btnCancelar = new JButton("Cancelar");
@@ -180,65 +189,54 @@ public class CitasViewForm extends JFrame {
         fila++; gbc.gridx = 0; gbc.gridy = fila; gbc.gridwidth = 2; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weighty = 0;
         panelContenido.add(panelBotones, gbc);
 
-        // --- Lógica de los Botones ---
+        // --- Lógica de los Botones (¡CORREGIDA!) ---
         btnCancelar.addActionListener(e -> dialogo.dispose());
         btnGuardar.addActionListener(e -> {
             try {
                 // 1. Recoger datos del formulario
                 Mascota mascotaSeleccionada = (Mascota) cmbMascotas.getSelectedItem();
+                java.util.Date fecha = dateChooser.getDate();
+                String motivo = txtMotivo.getText().trim();
+
+                // 2. Validaciones MÍNIMAS de la vista (solo para UI)
                 if (mascotaSeleccionada == null) {
                     JOptionPane.showMessageDialog(dialogo, "Debe seleccionar una mascota.", "Validación", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
-                
-                if (dateChooser.getDate() == null) {
+                if (fecha == null) {
                     JOptionPane.showMessageDialog(dialogo, "Debe seleccionar una fecha.", "Validación", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
-                
-                String motivo = txtMotivo.getText().trim();
                 if (motivo.isEmpty()) {
-                    JOptionPane.showMessageDialog(dialogo, "El motivo no puede estar vacío.", "Validación", JOptionPane.WARNING_MESSAGE);
-                    return;
+                     JOptionPane.showMessageDialog(dialogo, "El motivo no puede estar vacío.", "Validación", JOptionPane.WARNING_MESSAGE);
+                     return;
                 }
 
-                // Combinar fecha y hora
-                java.util.Date fecha = dateChooser.getDate();
+                // 3. Combinar fecha y hora
                 String[] horaMin = txtHora.getText().split(":");
                 int hora = Integer.parseInt(horaMin[0]);
                 int min = Integer.parseInt(horaMin[1]);
-                
                 LocalDateTime fechaHora = new java.sql.Timestamp(fecha.getTime()).toLocalDateTime()
-                                            .withHour(hora).withMinute(min);
-                
-                
-                                // 2.A. Validar que la cita no sea en el pasado
-                if (fechaHora.isBefore(LocalDateTime.now())) {
-                    JOptionPane.showMessageDialog(dialogo, "No se puede agendar una cita en una fecha u hora pasada.", "Validación", JOptionPane.ERROR_MESSAGE);
-                    return; // Detiene el proceso
-                }
+                        .withHour(hora).withMinute(min);
 
-                // 2.B. Validar que no haya otra cita a la misma hora
-                if (citaRepository.existeCitaConflictiva(fechaHora, null)) {
-                    JOptionPane.showMessageDialog(dialogo, "Ya existe una cita programada para esa fecha y hora.", "Conflicto de Horario", JOptionPane.ERROR_MESSAGE);
-                    return; // Detiene el proceso
-                }
-
-                // 2. Crear el objeto Cita
+                // 4. Crear el objeto Cita (simple POJO)
                 Cita nuevaCita = new Cita();
                 nuevaCita.setMascotaId(mascotaSeleccionada.getId());
                 nuevaCita.setFechaHora(fechaHora);
                 nuevaCita.setMotivo(motivo);
 
-                // 3. Llamar al repositorio para guardar
-                citaRepository.insertar(nuevaCita);
+                // 5. Delegar TODA la lógica de negocio al servicio
+                //    ¡YA NO HAY IFs DE LÓGICA DE NEGOCIO AQUÍ!
+                citaService.agendarCita(nuevaCita); // <-- ¡SRP y DIP en acción!
 
-                // 4. Actualizar la UI
+                // 6. Actualizar la UI si todo salió bien
                 recargarTabla();
                 JOptionPane.showMessageDialog(this, "Cita agendada correctamente.");
                 dialogo.dispose();
 
-            } catch (Exception ex) {
+            } catch (IllegalArgumentException ex) { // Captura errores de NEGOCIO
+                JOptionPane.showMessageDialog(dialogo, ex.getMessage(), "Error de Validación", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) { // Captura errores genéricos (BD, formato de hora, etc)
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(dialogo, "Error al guardar la cita: " + ex.getMessage(),
                         "Error", JOptionPane.ERROR_MESSAGE);
@@ -252,31 +250,31 @@ public class CitasViewForm extends JFrame {
         dialogo.setVisible(true);
     }
     
-// --- Lógica para el diálogo de editar (muy similar al de agendar) ---
+    // --- Lógica para el diálogo de editar (¡CORREGIDA!) ---
     private void mostrarDialogoEditar(Cita cita) {
-        // --- Creamos un diálogo para el formulario ---
         JDialog dialogo = new JDialog(this, "Editar Cita #" + cita.getId(), true);
         dialogo.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
         // --- Componentes del Formulario ---
         JComboBox<Mascota> cmbMascotas = new JComboBox<>();
         try {
-            mascotaRepository.listar().forEach(cmbMascotas::addItem);
+            // --- ¡CORREGIDO! ---
+            citaService.listarMascotas().forEach(cmbMascotas::addItem);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(dialogo, "No se pudieron cargar las mascotas.", "Error", JOptionPane.ERROR_MESSAGE);
         }
-        // Personalizamos el renderizado del ComboBox (igual que en agendar)
+        
         cmbMascotas.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof Mascota) {
-                    Mascota m = (Mascota) value;
-                    setText(m.getNombre() + " (" + m.getClienteNombre() + ")");
-                }
-                return this;
-            }
-        });
+             @Override
+             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                 if (value instanceof Mascota) {
+                     Mascota m = (Mascota) value;
+                     setText(m.getNombre() + " (" + m.getClienteNombre() + ")");
+                 }
+                 return this;
+             }
+         });
         
         JDateChooser dateChooser = new JDateChooser();
         JTextField txtHora = new JTextField(5);
@@ -284,15 +282,13 @@ public class CitasViewForm extends JFrame {
         txtMotivo.setLineWrap(true);
         txtMotivo.setWrapStyleWord(true);
         JScrollPane scrollMotivo = new JScrollPane(txtMotivo);
-
-        // ===================================================================
-        //  PUNTO CLAVE 1: PRE-CARGAR LOS DATOS DE LA CITA EXISTENTE
-        // ===================================================================
+        
+        // --- PRE-CARGAR DATOS (No cambia) ---
         dateChooser.setDate(java.sql.Timestamp.valueOf(cita.getFechaHora()));
         txtHora.setText(cita.getFechaHora().format(DateTimeFormatter.ofPattern("HH:mm")));
         txtMotivo.setText(cita.getMotivo());
-
-        // Para seleccionar la mascota correcta en el ComboBox, necesitamos buscarla
+        
+        // Esta lógica ahora funciona gracias al fix en CitaRepository (mascota_id)
         for (int i = 0; i < cmbMascotas.getItemCount(); i++) {
             Mascota mascotaEnCombo = cmbMascotas.getItemAt(i);
             if (mascotaEnCombo.getId().equals(cita.getMascotaId())) {
@@ -300,9 +296,8 @@ public class CitasViewForm extends JFrame {
                 break;
             }
         }
-        // ===================================================================
-
-        // --- Layout del Formulario (idéntico al de agendar) ---
+        
+        // --- Layout del Formulario (No cambia) ---
         JPanel panelContenido = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 10, 8, 10);
@@ -311,72 +306,60 @@ public class CitasViewForm extends JFrame {
         int fila = 0;
         gbc.gridx = 0; gbc.gridy = fila; panelContenido.add(new JLabel("Mascota:"), gbc);
         gbc.gridx = 1; gbc.weightx = 1; panelContenido.add(cmbMascotas, gbc);
-
+        
         fila++; gbc.gridx = 0; gbc.gridy = fila; gbc.weightx = 0; panelContenido.add(new JLabel("Fecha:"), gbc);
         gbc.gridx = 1; gbc.weightx = 1; panelContenido.add(dateChooser, gbc);
         
         fila++; gbc.gridx = 0; gbc.gridy = fila; gbc.weightx = 0; panelContenido.add(new JLabel("Hora (HH:mm):"), gbc);
         gbc.gridx = 1; gbc.weightx = 1; panelContenido.add(txtHora, gbc);
-
+        
         fila++; gbc.gridx = 0; gbc.gridy = fila; gbc.weightx = 0; gbc.anchor = GridBagConstraints.NORTH; panelContenido.add(new JLabel("Motivo:"), gbc);
         gbc.gridx = 1; gbc.weightx = 1; gbc.fill = GridBagConstraints.BOTH; gbc.weighty = 1; panelContenido.add(scrollMotivo, gbc);
 
+
         // --- Botones de Acción ---
         JButton btnCancelar = new JButton("Cancelar");
-        JButton btnGuardar = new JButton("Guardar Cambios"); // Texto del botón cambiado
+        JButton btnGuardar = new JButton("Guardar Cambios");
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        panelBotones.add(btnCancelar);
+        panelBotones.add(btnCancelar); 
         panelBotones.add(btnGuardar);
-
+        
         fila++; gbc.gridx = 0; gbc.gridy = fila; gbc.gridwidth = 2; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weighty = 0;
         panelContenido.add(panelBotones, gbc);
 
-        // --- Lógica de los Botones ---
+
+        // --- Lógica de los Botones (¡CORREGIDA!) ---
         btnCancelar.addActionListener(e -> dialogo.dispose());
         btnGuardar.addActionListener(e -> {
             try {
-                // 1. Recoger datos del formulario (igual que en agendar)
+                // 1. Recoger datos del formulario
                 Mascota mascotaSeleccionada = (Mascota) cmbMascotas.getSelectedItem();
                 java.util.Date fecha = dateChooser.getDate();
                 String motivo = txtMotivo.getText().trim();
+                // ... (Validaciones de UI de campos vacíos...) ...
                 
-                // ... (aquí irían las mismas validaciones de campos vacíos) ...
-                
+                // 2. Combinar fecha y hora
                 String[] horaMin = txtHora.getText().split(":");
                 LocalDateTime fechaHora = new java.sql.Timestamp(fecha.getTime()).toLocalDateTime()
-                                            .withHour(Integer.parseInt(horaMin[0]))
-                                            .withMinute(Integer.parseInt(horaMin[1]));
+                        .withHour(Integer.parseInt(horaMin[0]))
+                        .withMinute(Integer.parseInt(horaMin[1]));
                 
-                
-                // 2.A. Validar que la cita no sea en el pasado
-                if (fechaHora.isBefore(LocalDateTime.now())) {
-                    JOptionPane.showMessageDialog(dialogo, "No se puede agendar una cita en una fecha u hora pasada.", "Validación", JOptionPane.ERROR_MESSAGE);
-                    return; // Detiene el proceso
-                }
-
-                // 2.B. Validar que no haya otra cita a la misma hora (excluyendo la actual)
-                if (citaRepository.existeCitaConflictiva(fechaHora, cita.getId())) {
-                    JOptionPane.showMessageDialog(dialogo, "Ya existe otra cita programada para esa fecha y hora.", "Conflicto de Horario", JOptionPane.ERROR_MESSAGE);
-                    return; // Detiene el proceso
-                }
-
-                // ===================================================================
-                //  PUNTO CLAVE 2: ACTUALIZAR EL OBJETO CITA Y LLAMAR A `actualizar`
-                // ===================================================================
+                // 3. Actualizar el objeto CITA existente
                 cita.setMascotaId(mascotaSeleccionada.getId());
                 cita.setFechaHora(fechaHora);
                 cita.setMotivo(motivo);
-                // El estado se podría cambiar aquí si tuvieras un ComboBox para ello.
                 
-                citaRepository.actualizar(cita); // <--- Llamamos al método de actualizar
-                // ===================================================================
+                // 4. Delegar TODA la lógica de negocio al servicio
+                citaService.actualizarCita(cita); // <-- ¡SRP y DIP en acción!
 
-                // 4. Actualizar la UI
+                // 5. Actualizar la UI
                 recargarTabla();
                 JOptionPane.showMessageDialog(this, "Cita actualizada correctamente.");
                 dialogo.dispose();
-
-            } catch (Exception ex) {
+                
+            } catch (IllegalArgumentException ex) { // Captura errores de NEGOCIO
+                JOptionPane.showMessageDialog(dialogo, ex.getMessage(), "Error de Validación", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) { // Captura errores genéricos
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(dialogo, "Error al actualizar la cita: " + ex.getMessage(),
                         "Error", JOptionPane.ERROR_MESSAGE);
@@ -390,35 +373,28 @@ public class CitasViewForm extends JFrame {
         dialogo.setVisible(true);
     }
 
-// =================================================================
+    // =================================================================
     //  CLASES INTERNAS PARA LOS BOTONES DE ACCIONES EN LA TABLA
-    //  (VERSIÓN FINAL CORREGIDA)
     // =================================================================
     
     // RENDERER (DIBUJO)
     private static class AccionesRenderer extends JPanel implements TableCellRenderer {
         private final JButton btnEdit = new JButton("Editar");
         private final JButton btnDel = new JButton("Cancelar");
-
         AccionesRenderer() {
-            setOpaque(true);
-            // SOLUCIÓN: Usar GridLayout para forzar tamaños iguales y asegurar visibilidad.
-            setLayout(new GridLayout(1, 2, 6, 0)); // 1 fila, 2 columnas, 6px de gap H, 0px de gap V
-            
-            btnEdit.setFocusable(false);
-            btnDel.setFocusable(false);
-            
-            add(btnEdit);
-            add(btnDel);
+             setOpaque(true); 
+             setLayout(new GridLayout(1, 2, 6, 0));
+             btnEdit.setFocusable(false); 
+             btnDel.setFocusable(false);
+             add(btnEdit); 
+             add(btnDel);
         }
-
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            // Se ajusta el color de fondo de los botones al de la selección de la tabla
             Color bg = isSelected ? table.getSelectionBackground() : table.getBackground();
             setBackground(bg);
-            for(Component c : getComponents()){
-                c.setBackground(bg);
+            for(Component c : getComponents()){ 
+                c.setBackground(bg); 
             }
             return this;
         }
@@ -426,18 +402,16 @@ public class CitasViewForm extends JFrame {
 
     // EDITOR (LÓGICA REAL)
     private class AccionesEditor extends AbstractCellEditor implements TableCellEditor {
-        private final JPanel panel = new JPanel(); // El layout se define abajo
+        private final JPanel panel = new JPanel();
         private final JButton btnEdit = new JButton("Editar");
-        private final JButton btnDel = new JButton("Cancelar"); // Texto simplificado para consistencia
+        private final JButton btnDel = new JButton("Cancelar");
         private int editingRow = -1;
 
         AccionesEditor() {
-            // SOLUCIÓN: Usar GridLayout aquí también.
             panel.setLayout(new GridLayout(1, 2, 6, 0));
             panel.add(btnEdit);
             panel.add(btnDel);
 
-            // CORRECCIÓN: Detener edición ANTES de mostrar el diálogo.
             btnEdit.addActionListener(e -> { 
                 fireEditingStopped(); 
                 onEditar(); 
@@ -452,6 +426,7 @@ public class CitasViewForm extends JFrame {
             if (editingRow < 0) return;
             int modelRow = tablaCitas.convertRowIndexToModel(editingRow);
             Cita c = tableModel.getAt(modelRow);
+            // (Gracias al fix, c.getMascotaId() ahora tiene un valor)
             mostrarDialogoEditar(c);
         }
 
@@ -468,7 +443,8 @@ public class CitasViewForm extends JFrame {
 
             if (ok == JOptionPane.YES_OPTION) {
                 try {
-                    citaRepository.eliminar(c.getId());
+                    // --- ¡CORREGIDO! ---
+                    citaService.cancelarCita(c.getId()); // Llama al servicio
                     recargarTabla();
                     JOptionPane.showMessageDialog(CitasViewForm.this, "Cita cancelada.");
                 } catch (Exception ex) {
@@ -481,28 +457,38 @@ public class CitasViewForm extends JFrame {
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
             editingRow = row;
-            // Se ajusta el color de fondo de los botones al de la selección de la tabla
             panel.setBackground(table.getSelectionBackground());
-            for(Component c : panel.getComponents()){
-                c.setBackground(table.getSelectionBackground());
+            for(Component c : panel.getComponents()){ 
+                c.setBackground(table.getSelectionBackground()); 
             }
             return panel;
         }
 
         @Override
-        public Object getCellEditorValue() {
-            return null;
-        }
+        public Object getCellEditorValue() { return null; }
     }
 
-    // --- Main para pruebas (opcional) ---
+    // --- Main para pruebas (¡CORREGIDO!) ---
+    // Este método 'main' te muestra CÓMO se deben ensamblar
+    // las piezas. Este es el "plano" que debes seguir en tu MainWindow.
     public static void main(String[] args) {
-        // Para que la UI se vea como el sistema operativo nativo
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
             e.printStackTrace();
         }
-        SwingUtilities.invokeLater(() -> new CitasViewForm().setVisible(true));
+        
+        // --- ¡EL ENSAMBLAJE SUCEDE AQUÍ! ---
+        SwingUtilities.invokeLater(() -> {
+            // 1. Crear implementaciones concretas
+            ICitaRepository citaRepo = new CitaRepository();
+            IMascotaRepository mascotaRepo = new MascotaRepository();
+            
+            // 2. Crear el servicio e inyectar
+            CitaService servicio = new CitaService(citaRepo, mascotaRepo);
+            
+            // 3. Crear la vista e inyectar
+            new CitasViewForm(servicio).setVisible(true);
+        });
     }
 }

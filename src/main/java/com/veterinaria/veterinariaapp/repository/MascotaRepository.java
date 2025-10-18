@@ -8,13 +8,16 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MascotaRepository {
+// MODIFICACIÓN 1: Añade "implements IMascotaRepository"
+//         VVVVVVVVVVVVVVVVVVVVVVVVVV
+public class MascotaRepository implements IMascotaRepository {
 
     private static final String BASE_SELECT =
         "SELECT m.id, m.nombre, m.raza, m.especie, m.fecha_registro, m.fecha_nacimiento, " +
         "       m.cliente_id, CONCAT(c.nombre,' ',c.apellido) AS cliente, m.foto " +
         "FROM mascota m LEFT JOIN cliente c ON c.id_cliente = m.cliente_id ";
 
+    @Override // MODIFICACIÓN 2: Añade @Override
     public List<Mascota> listar() throws Exception {
         try (Connection cn = Db.getConnection();
              PreparedStatement ps = cn.prepareStatement(BASE_SELECT + " ORDER BY m.id DESC");
@@ -25,6 +28,7 @@ public class MascotaRepository {
         }
     }
 
+    @Override // MODIFICACIÓN 2: Añade @Override
     public void insertar(Mascota m) throws Exception {
         String sql = "INSERT INTO mascota(nombre, raza, especie, fecha_registro, fecha_nacimiento, cliente_id, foto) " +
                      "VALUES (?,?,?,?,?,?,?)";
@@ -33,7 +37,7 @@ public class MascotaRepository {
             ps.setString(1, m.getNombre());
             ps.setString(2, m.getRaza());
             ps.setString(3, m.getEspecie());
-            ps.setObject(4, m.getFechaRegistro());   // JDBC 4.2 soporta LocalDate
+            ps.setObject(4, m.getFechaRegistro());     // JDBC 4.2 soporta LocalDate
             ps.setObject(5, m.getFechaNacimiento());
             if (m.getClienteId() == null) ps.setNull(6, Types.INTEGER); else ps.setInt(6, m.getClienteId());
             if (m.getFoto() == null) ps.setNull(7, Types.BLOB); else ps.setBytes(7, m.getFoto());
@@ -42,6 +46,7 @@ public class MascotaRepository {
         }
     }
 
+    @Override // MODIFICACIÓN 2: Añade @Override
     public void actualizar(Mascota m) throws Exception {
         String sql = "UPDATE mascota SET nombre=?, raza=?, especie=?, fecha_registro=?, fecha_nacimiento=?, " +
                      "cliente_id=?, foto=? WHERE id=?";
@@ -59,6 +64,7 @@ public class MascotaRepository {
         }
     }
 
+    @Override // MODIFICACIÓN 2: Añade @Override
     public void eliminar(int id) throws Exception {
         try (Connection cn = Db.getConnection();
              PreparedStatement ps = cn.prepareStatement("DELETE FROM mascota WHERE id=?")) {
@@ -68,6 +74,7 @@ public class MascotaRepository {
     }
 
     // ---- utilidades ----
+    // (El método 'map' es privado, así que NO lleva @Override)
     private Mascota map(ResultSet rs) throws SQLException {
         Mascota m = new Mascota();
         m.setId(rs.getInt("id"));

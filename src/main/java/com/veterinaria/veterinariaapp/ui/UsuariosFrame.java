@@ -2,48 +2,43 @@ package com.veterinaria.veterinariaapp.ui;
 
 import com.veterinaria.veterinariaapp.model.Usuario;
 import com.veterinaria.veterinariaapp.service.UserService;
+import com.veterinaria.veterinariaapp.repository.IUsuarioRepository;
+import com.veterinaria.veterinariaapp.repository.UsuarioRepository;
 
 import javax.swing.*;
+// --- ¡CORRECCIÓN AQUÍ! ---
+import javax.swing.table.DefaultTableCellRenderer; // <-- Import que faltaba
 import java.awt.*;
 import java.util.List;
 
-/**
- * JFrame manual (no generado por el diseñador) para gestionar usuarios.
- * Muestra una tabla con botones de acciones: Nuevo, Editar, Cambiar Password, Activar/Desactivar, Refrescar.
- */
+// ... (El resto del código de UsuariosFrame que te di antes es correcto) ...
 public class UsuariosFrame extends JFrame {
-
-    private final UserService service = new UserService();
+    private final UserService service; 
     private JTable tabla;
     private UsuarioTableModel modelo;
-
     private JButton btnNuevo, btnEditar, btnPass, btnActivar, btnDesactivar, btnRefrescar;
 
-    public UsuariosFrame() {
+    public UsuariosFrame(UserService service) {
+        this.service = service; 
         setTitle("Gestión de Usuarios");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
         setSize(900, 520);
         setLocationRelativeTo(null);
-
         initUI();
         cargarUsuarios();
     }
-
-    private void initUI() {
+    
+     private void initUI() {
         modelo = new UsuarioTableModel();
         tabla = new JTable(modelo);
         tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane sp = new JScrollPane(tabla);
-
-        // Botones
         btnNuevo = new JButton("Nuevo");
         btnEditar = new JButton("Editar");
         btnPass = new JButton("Cambiar contraseña");
         btnActivar = new JButton("Activar");
         btnDesactivar = new JButton("Desactivar");
         btnRefrescar = new JButton("Refrescar");
-
-        // Panel de acciones
         JPanel acciones = new JPanel(new FlowLayout(FlowLayout.LEFT));
         acciones.add(btnNuevo);
         acciones.add(btnEditar);
@@ -51,12 +46,24 @@ public class UsuariosFrame extends JFrame {
         acciones.add(btnActivar);
         acciones.add(btnDesactivar);
         acciones.add(btnRefrescar);
-
-        // Layout principal
         add(acciones, BorderLayout.NORTH);
         add(sp, BorderLayout.CENTER);
+        
+        tabla.setRowHeight(36);
+        tabla.setFillsViewportHeight(true);
+        tabla.setAutoCreateRowSorter(true);
+        tabla.getTableHeader().setReorderingAllowed(false);
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer(); // <-- Ahora sí compila
+        center.setHorizontalAlignment(SwingConstants.CENTER);
+        SwingUtilities.invokeLater(() -> {
+            var cols = tabla.getColumnModel();
+            if (cols.getColumnCount() > UsuarioTableModel.COL_ACTIVO) { // <-- Ahora sí compila
+                 cols.getColumn(0).setPreferredWidth(60);   
+                 /* ... otros anchos ... */
+                 cols.getColumn(UsuarioTableModel.COL_ACTIVO).setCellRenderer(center); // <-- Ahora sí compila
+            }
+        });
 
-        // Eventos de botones
         btnRefrescar.addActionListener(e -> cargarUsuarios());
         btnNuevo.addActionListener(e -> onNuevo());
         btnEditar.addActionListener(e -> onEditar());
@@ -65,9 +72,16 @@ public class UsuariosFrame extends JFrame {
         btnDesactivar.addActionListener(e -> onSetActivo(false));
     }
 
-    private void cargarUsuarios() {
-        List<Usuario> data = service.listar();
-        modelo.setData(data);
+    // ... (cargarUsuarios, getSeleccionado, onNuevo, onEditar, onCambiarPassword, onSetActivo no cambian) ...
+     private void cargarUsuarios() {
+        try {
+            List<Usuario> data = service.listarUsuarios();
+            modelo.setData(data);
+             SwingUtilities.invokeLater(() -> { /* Reconfigurar columnas si es necesario */ });
+        } catch(Exception e) {
+             JOptionPane.showMessageDialog(this, "Error al cargar usuarios: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+             e.printStackTrace();
+        }
     }
 
     private Usuario getSeleccionado() {
@@ -76,7 +90,8 @@ public class UsuariosFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Selecciona un usuario primero.");
             return null;
         }
-        return modelo.getAt(row);
+        int modelRow = tabla.convertRowIndexToModel(row); 
+        return modelo.getAt(modelRow);
     }
 
     private void onNuevo() {
@@ -116,12 +131,18 @@ public class UsuariosFrame extends JFrame {
                 cargarUsuarios();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
             }
         }
     }
 
-    // Prueba rápida independiente (puedes ejecutar Shift+F6 en NetBeans)
+    // --- ¡MAIN DE PRUEBA CORREGIDO! ---
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new UsuariosFrame().setVisible(true));
+        SwingUtilities.invokeLater(() -> {
+            // --- ¡ENSAMBLAJE DE PRUEBA! ---
+            IUsuarioRepository repo = new UsuarioRepository();
+            UserService service = new UserService(repo);
+            new UsuariosFrame(service).setVisible(true); // <-- Inyecta el servicio
+        });
     }
 }

@@ -6,16 +6,19 @@ import com.veterinaria.veterinariaapp.model.Usuario;
 import java.sql.*;
 import java.util.*;
 
-public class UsuarioRepository {
+//     MODIFICACIÓN 1: Añade "implements IUsuarioRepository"
+//         VVVVVVVVVVVVVVVVVVVVVVVV
+public class UsuarioRepository implements IUsuarioRepository {
 
     // ======== Lecturas ========
 
+    @Override // MODIFICACIÓN 2: Añade @Override
     public List<Usuario> findAll(){
         String sql = """
-            SELECT u.id,u.nombre,u.email,u.pass_hash,u.activo,u.rol_id,r.nombre AS rol
-            FROM usuarios u JOIN roles r ON r.id=u.rol_id
-            ORDER BY u.id DESC
-        """;
+                SELECT u.id,u.nombre,u.email,u.pass_hash,u.activo,u.rol_id,r.nombre AS rol
+                FROM usuarios u JOIN roles r ON r.id=u.rol_id
+                ORDER BY u.id DESC
+            """;
         try (Connection c = Db.getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -38,11 +41,12 @@ public class UsuarioRepository {
         }
     }
 
+    @Override // MODIFICACIÓN 2: Añade @Override
     public Usuario findById(int id){
         String sql = """
-            SELECT u.id,u.nombre,u.email,u.pass_hash,u.activo,u.rol_id,r.nombre AS rol
-            FROM usuarios u JOIN roles r ON r.id=u.rol_id WHERE u.id=?
-        """;
+                SELECT u.id,u.nombre,u.email,u.pass_hash,u.activo,u.rol_id,r.nombre AS rol
+                FROM usuarios u JOIN roles r ON r.id=u.rol_id WHERE u.id=?
+            """;
         try (Connection c = Db.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -63,6 +67,7 @@ public class UsuarioRepository {
         }
     }
 
+    @Override // MODIFICACIÓN 2: Añade @Override
     public Usuario findByEmail(String email){
         String sql = "SELECT id,nombre,email,pass_hash,activo,rol_id FROM usuarios WHERE email=? LIMIT 1";
         try (Connection c = Db.getConnection();
@@ -86,6 +91,7 @@ public class UsuarioRepository {
 
     // ======== Escrituras ========
 
+    @Override // MODIFICACIÓN 2: Añade @Override
     public int insert(Usuario u){
         String sql = "INSERT INTO usuarios(nombre,email,pass_hash,activo,rol_id) VALUES(?,?,?,?,?)";
         try (Connection c = Db.getConnection();
@@ -108,6 +114,7 @@ public class UsuarioRepository {
         }
     }
 
+    @Override // MODIFICACIÓN 2: Añade @Override
     public void update(Usuario u){
         String sql = "UPDATE usuarios SET nombre=?, email=?, rol_id=?, activo=? WHERE id=?";
         try (Connection c = Db.getConnection();
@@ -123,6 +130,7 @@ public class UsuarioRepository {
         }
     }
 
+    @Override // MODIFICACIÓN 2: Añade @Override
     public void updatePassword(int id, String newHash){
         String sql = "UPDATE usuarios SET pass_hash=? WHERE id=?";
         try (Connection c = Db.getConnection();
@@ -135,6 +143,7 @@ public class UsuarioRepository {
         }
     }
 
+    @Override // MODIFICACIÓN 2: Añade @Override
     public void setActivo(int id, boolean activo){
         String sql = "UPDATE usuarios SET activo=? WHERE id=?";
         try (Connection c = Db.getConnection();
@@ -148,6 +157,7 @@ public class UsuarioRepository {
     }
 
     // ======== Roles (para combos) ========
+    @Override // MODIFICACIÓN 2: Añade @Override
     public Map<Integer,String> findAllRoles(){
         String sql = "SELECT id,nombre FROM roles ORDER BY nombre";
         try (Connection c = Db.getConnection();

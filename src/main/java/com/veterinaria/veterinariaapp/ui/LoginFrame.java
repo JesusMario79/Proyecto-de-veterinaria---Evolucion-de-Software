@@ -1,10 +1,11 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package com.veterinaria.veterinariaapp.ui;
+
 import com.veterinaria.veterinariaapp.security.SessionManager;
 import com.veterinaria.veterinariaapp.service.AuthService;
+// --- ¡IMPORTS PARA MAIN! ---
+import com.veterinaria.veterinariaapp.repository.IUsuarioRepository;
+import com.veterinaria.veterinariaapp.repository.UsuarioRepository;
+
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -17,15 +18,19 @@ public class LoginFrame extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(LoginFrame.class.getName());
 
-  private final AuthService auth = new AuthService();
- 
-    public LoginFrame() {
+    // --- ¡CORREGIDO! ---
+    // private final AuthService auth = new AuthService(); // <-- ELIMINADO
+    private final AuthService auth; // <-- AÑADIDO
+
+    // --- ¡CORREGIDO! (Recibe el servicio) ---
+    public LoginFrame(AuthService auth) {
+        this.auth = auth; // <-- AÑADIDO
+
         initComponents();
         setTitle("Veterinario - Iniciar sesión");
         setLocationRelativeTo(null);
-        txtEmail.setText("");
+        txtEmail.setText(""); // Limpiar campos al inicio
         txtPass.setText("");
-        
     }
 
     /**
@@ -115,31 +120,42 @@ public class LoginFrame extends javax.swing.JFrame {
          String pass  = new String(txtPass.getPassword());
 
          if (email.isEmpty() || pass.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Completa email y contraseña.",
-                "Faltan datos", JOptionPane.WARNING_MESSAGE);
-           return;
+             JOptionPane.showMessageDialog(this, "Completa email y contraseña.",
+                     "Faltan datos", JOptionPane.WARNING_MESSAGE);
+             return;
          }
-        try {
-             var user = auth.autenticar(email, pass); // ← valida
-             SessionManager.get().login(user);
-             JOptionPane.showMessageDialog(this, "Bienvenido/a, " + user.getNombre());
+         try {
+             // Llama al servicio inyectado
+             var user = auth.autenticar(email, pass);
 
-             // Abrir la ventana principal SOLO si el login fue correcto
-             MainWindow mw = new MainWindow();      // o new MainWindow(user)
-             mw.setLocationRelativeTo(null);
+             // Guarda el usuario en la sesión
+             SessionManager.get().login(user);
+
+             // Mensaje de bienvenida (opcional)
+             // JOptionPane.showMessageDialog(this, "Bienvenido/a, " + user.getNombre());
+
+             // --- ¡ENSAMBLAJE DE MainWindow! ---
+             // Aquí creamos MainWindow (que ahora internamente ensambla todo lo demás)
+             MainWindow mw = new MainWindow();
+             mw.setLocationRelativeTo(null); // Centrarla
              mw.setVisible(true);
 
-        // Cerrar el login
-        this.dispose();
-        } catch (Exception e) {
-           logger.log(java.util.logging.Level.WARNING, "Login fallido", e);
-        JOptionPane.showMessageDialog(this, e.getMessage(),
-                "Error de inicio de sesión", JOptionPane.ERROR_MESSAGE);
-        // Opcional: limpiar y enfocar
-        txtPass.setText("");
-        txtPass.requestFocusInWindow();
-        return; // ← evita seguir ejecutando nada más
-        }
+             // Cerrar el login
+             this.dispose();
+
+         } catch (IllegalArgumentException | IllegalStateException e) { // Captura errores de login específicos
+             logger.log(java.util.logging.Level.INFO, "Login fallido para {0}: {1}", new Object[]{email, e.getMessage()});
+             JOptionPane.showMessageDialog(this, e.getMessage(),
+                     "Error de inicio de sesión", JOptionPane.WARNING_MESSAGE); // WARNING en lugar de ERROR
+             txtPass.setText("");
+             txtPass.requestFocusInWindow();
+         } catch (Exception e) { // Captura otros errores (BD, etc.)
+             logger.log(java.util.logging.Level.SEVERE, "Error inesperado en login", e);
+             JOptionPane.showMessageDialog(this, "Ocurrió un error inesperado. Contacte al administrador.",
+                     "Error Crítico", JOptionPane.ERROR_MESSAGE);
+             txtPass.setText("");
+             txtPass.requestFocusInWindow();
+         }
     }//GEN-LAST:event_btnLoginActionPerformed
 
     private void txtPassActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtPassActionPerformed
@@ -152,23 +168,21 @@ public class LoginFrame extends javax.swing.JFrame {
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
+             // Usar el look & feel del sistema operativo para mejor apariencia
+             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+            logger.log(java.util.logging.Level.SEVERE, "No se pudo establecer el LookAndFeel del sistema", ex);
         }
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new LoginFrame().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> {
+            // --- ¡ENSAMBLAJE DE AuthService y LoginFrame! ---
+            IUsuarioRepository repo = new UsuarioRepository();
+            AuthService authService = new AuthService(repo);
+            new LoginFrame(authService).setVisible(true); // <-- Inyecta el servicio
+        });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
