@@ -31,6 +31,12 @@ import com.veterinaria.veterinariaapp.security.PermisosAdmin;
 import com.veterinaria.veterinariaapp.security.PermisosRecepcionista;
 import com.veterinaria.veterinariaapp.security.PermisosVeterinario;
 
+// Pagos
+import com.veterinaria.veterinariaapp.repository.IPagoRepository;
+import com.veterinaria.veterinariaapp.repository.PagoRepository;
+import com.veterinaria.veterinariaapp.service.PagoService;
+import com.veterinaria.veterinariaapp.ui.PagoViewForm;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -69,6 +75,7 @@ public class MainWindow extends JFrame {
     private final IClienteRepository clienteRepo = new ClienteRepository();
     private final IMascotaRepository mascotaRepo = new MascotaRepository();
     private final IUsuarioRepository usuarioRepo = new UsuarioRepository();
+    private final IPagoRepository pagoRepo = new PagoRepository();
 
     private final CitaService citaService = new CitaService(citaRepo, mascotaRepo);
     private final ClienteService clienteService = new ClienteService(clienteRepo);
@@ -79,16 +86,18 @@ public class MainWindow extends JFrame {
     // Dashboard service/repo (nuevo)
     private final IDashboardRepository dashboardRepo = new DashboardRepository();
     private final DashboardService dashboardService = new DashboardService(dashboardRepo);
+    private final PagoService pagoService = new PagoService(pagoRepo);
 
     // Vistas
     private CitasViewForm citasView;
     private ClienteViewForm clienteView;
     private MascotaViewForm mascotaView;
     private UsuariosPanel usuariosPanel;
+    private PagoViewForm pagoView;
 
     // Menús/botones
-    private JMenuItem miClientes, miMascotas, miCitas, miUsuarios;
-    private JButton btnUsuarios, btnCitas, btnClientes, btnMascotas;
+    private JMenuItem miClientes, miMascotas, miCitas, miUsuarios, miPagos;
+    private JButton btnUsuarios, btnCitas, btnClientes, btnMascotas, btnPagos;
 
     public MainWindow() {
         setTitle("Veterinario — Panel Principal");
@@ -106,11 +115,13 @@ public class MainWindow extends JFrame {
         clienteView   = new ClienteViewForm(clienteService);
         mascotaView   = new MascotaViewForm(mascotaService);
         citasView     = new CitasViewForm(citaService);
+        pagoView = new PagoViewForm(pagoService);
 
         content.add(usuariosPanel, "usuarios");
         content.add(clienteView.getContentPane(), "clientes");
         content.add(mascotaView.getContentPane(), "mascotas");
         content.add(citasView.getContentPane(), "citas");
+        content.add(pagoView.getContentPane(), "pagos");
         add(content, BorderLayout.CENTER);
 
         aplicarPermisosSegunRol();
@@ -138,10 +149,12 @@ public class MainWindow extends JFrame {
         miMascotas = new JMenuItem("Mascotas");
         miCitas    = new JMenuItem("Citas");
         miUsuarios = new JMenuItem("Usuarios");
+        miPagos = new JMenuItem("Pagos");
         mModulos.add(miClientes);
         mModulos.add(miMascotas);
         mModulos.add(miCitas);
         mModulos.add(miUsuarios);
+        mModulos.add(miPagos);
 
         bar.add(mArchivo);
         bar.add(mModulos);
@@ -158,6 +171,10 @@ public class MainWindow extends JFrame {
         miMascotas.addActionListener(e -> { cards.show(content, "mascotas"); if (mascotaView != null) mascotaView.recargarTabla(); });
         miCitas.addActionListener(e -> { cards.show(content, "citas"); if (citasView != null) citasView.recargarTabla(); });
         miUsuarios.addActionListener(e -> { cards.show(content, "usuarios"); if (usuariosPanel != null) usuariosPanel.cargarUsuarios(); });
+        miPagos.addActionListener(e -> { 
+            cards.show(content, "pagos"); 
+        });
+        
 
         miCerrarSesion.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_L, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         miSalir.setAccelerator        (KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Q, java.awt.event.InputEvent.CTRL_DOWN_MASK));
@@ -186,6 +203,7 @@ public class MainWindow extends JFrame {
         btnCitas    = mkNav("Citas");
         btnClientes = mkNav("Clientes");
         btnMascotas = mkNav("Mascotas");
+        btnPagos = mkNav("Pagos");
         JButton btnCerrar = mkNav("Cerrar sesión");
 
         menu.add(btnInicio);
@@ -193,6 +211,7 @@ public class MainWindow extends JFrame {
         menu.add(btnCitas);
         menu.add(btnClientes);
         menu.add(btnMascotas);
+        menu.add(btnPagos);
 
         side.add(menu, BorderLayout.CENTER);
 
@@ -209,6 +228,10 @@ public class MainWindow extends JFrame {
         btnClientes.addActionListener(e -> { cards.show(content, "clientes"); if (clienteView != null) clienteView.recargarTabla(); });
         btnCitas.addActionListener(e -> { cards.show(content, "citas"); if (citasView != null) citasView.recargarTabla(); });
         btnMascotas.addActionListener(e -> { cards.show(content, "mascotas"); if (mascotaView != null) mascotaView.recargarTabla(); });
+        btnPagos.addActionListener(e -> {
+            cards.show(content, "pagos");
+        });
+        
         btnCerrar.addActionListener(e -> {
             SessionManager.get().logout();
             JOptionPane.showMessageDialog(this, "Sesión cerrada.");
@@ -725,10 +748,12 @@ public class MainWindow extends JFrame {
     public JMenuItem getMiMascotas() { return miMascotas; }
     public JMenuItem getMiCitas() { return miCitas; }
     public JMenuItem getMiUsuarios() { return miUsuarios; }
+    public JMenuItem getMiPagos() { return miPagos; }
     public JButton getBtnClientes() { return btnClientes; }
     public JButton getBtnMascotas() { return btnMascotas; }
     public JButton getBtnCitas() { return btnCitas; }
     public JButton getBtnUsuarios() { return btnUsuarios; }
+    public JButton getBtnPagos() { return btnPagos; }
 
     public static void main(String[] args) {
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception e) { e.printStackTrace(); }
