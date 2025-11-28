@@ -21,5 +21,8 @@ public class PermisosAdmin implements IPermisosRol {
         mainWindow.getBtnMascotas().setVisible(true);
         mainWindow.getBtnCitas().setVisible(true);
         mainWindow.getBtnUsuarios().setVisible(true); // El Admin sí ve Usuarios
+        
+        mainWindow.getBtnHistorial().setVisible(true); // Historial
+        mainWindow.getMiHistorial().setVisible(true);  //Historial
     }
 }
