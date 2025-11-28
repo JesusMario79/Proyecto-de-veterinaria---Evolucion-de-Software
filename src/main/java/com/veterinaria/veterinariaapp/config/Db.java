@@ -5,11 +5,11 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class Db {
-    // OJO: tu BD se llama veterinaria_db
+    // CORREGIDO: Se agregó &allowPublicKeyRetrieval=true al final
     private static final String URL  =
-        "jdbc:mysql://localhost:3306/veterinaria_db?useSSL=false&serverTimezone=UTC";
-    private static final String USER = "root";                // cámbiar nombre de base de datos
-    private static final String PASS = "root";      // tu contraseña
+        "jdbc:mysql://localhost:3306/veterinaria_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+    private static final String USER = "root";
+    private static final String PASS = "root"; 
 
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASS);
