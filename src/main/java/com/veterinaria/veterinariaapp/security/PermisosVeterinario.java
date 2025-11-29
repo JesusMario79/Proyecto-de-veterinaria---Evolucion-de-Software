@@ -14,6 +14,7 @@ public class PermisosVeterinario implements IPermisosRol {
         mainWindow.getMiMascotas().setVisible(true);  // Muestra Mascotas
         mainWindow.getMiCitas().setVisible(true);     // Muestra Citas
         mainWindow.getMiUsuarios().setVisible(false); // Oculta Usuarios
+        mainWindow.getMiPagos().setVisible(false);
 
         // Menú Lateral
         mainWindow.getBtnClientes().setVisible(false); // Oculta Clientes
@@ -23,5 +24,6 @@ public class PermisosVeterinario implements IPermisosRol {
         
         mainWindow.getBtnHistorial().setVisible(true); // Historial
         mainWindow.getMiHistorial().setVisible(true);  //Historial
+        mainWindow.getBtnPagos().setVisible(false);
     }
 }
