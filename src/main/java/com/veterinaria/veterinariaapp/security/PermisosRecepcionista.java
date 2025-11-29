@@ -14,11 +14,15 @@ public class PermisosRecepcionista implements IPermisosRol {
         mainWindow.getMiMascotas().setVisible(false); // Oculta Mascotas
         mainWindow.getMiCitas().setVisible(true);     // Muestra Citas
         mainWindow.getMiUsuarios().setVisible(false); // Oculta Usuarios
+        mainWindow.getMiProductos().setVisible(false);
+        mainWindow.getMiPagos().setVisible(true);
 
         // Menú Lateral
         mainWindow.getBtnClientes().setVisible(true);  // Muestra Clientes
         mainWindow.getBtnMascotas().setVisible(false); // Oculta Mascotas
         mainWindow.getBtnCitas().setVisible(true);     // Muestra Citas
         mainWindow.getBtnUsuarios().setVisible(false); // Oculta Usuarios
+        mainWindow.getBtnProductos().setVisible(false);
+        mainWindow.getBtnPagos().setVisible(true);
     }
 }
