@@ -12,6 +12,8 @@ import com.veterinaria.veterinariaapp.repository.IMascotaRepository;
 import com.veterinaria.veterinariaapp.repository.MascotaRepository;
 import com.veterinaria.veterinariaapp.repository.IUsuarioRepository;
 import com.veterinaria.veterinariaapp.repository.UsuarioRepository;
+import com.veterinaria.veterinariaapp.repository.IProductoRepository;
+import com.veterinaria.veterinariaapp.repository.ProductoRepository;
 import com.veterinaria.veterinariaapp.repository.IServiciosRepository;
 import com.veterinaria.veterinariaapp.repository.ServicioRepository;
 // --- NUEVOS IMPORTS PARA HISTORIAL ---
@@ -30,6 +32,7 @@ import com.veterinaria.veterinariaapp.service.CitaService;
 import com.veterinaria.veterinariaapp.service.ClienteService;
 import com.veterinaria.veterinariaapp.service.MascotaService;
 import com.veterinaria.veterinariaapp.service.UserService;
+import com.veterinaria.veterinariaapp.service.ProductoService;
 // Servicios (NUEVO)
 import com.veterinaria.veterinariaapp.service.ServiciosService;
 
@@ -94,6 +97,9 @@ public class MainWindow extends JFrame {
     private final MascotaService mascotaService = new MascotaService(mascotaRepo, clienteRepo);
     private final UserService userService = new UserService(usuarioRepo);
     private final AuthService authService = new AuthService(usuarioRepo);
+    private final IProductoRepository productoRepo = new ProductoRepository();
+    private final ProductoService productoService = new ProductoService(productoRepo);
+
     private final ServiciosService serviciosService = new ServiciosService(serviciosRepo);
     
     // --- NUEVO SERVICIO DE HISTORIAL ---
@@ -110,14 +116,15 @@ public class MainWindow extends JFrame {
     private ClienteViewForm clienteView;
     private MascotaViewForm mascotaView;
     private UsuariosPanel usuariosPanel;
-    
+  
     private ServiciosViewForm serviciosView;
+    private ProductosViewForm productosView;
     private PagoViewForm pagoView;
     private HistorialViewForm historialView;
-
+    
     // Menús/botones
-    private JMenuItem miClientes, miMascotas, miCitas, miUsuarios, miPagos, miHistorial;
-    private JButton btnUsuarios, btnCitas, btnClientes, btnMascotas, btnPagos, btnHistorial;
+    private JMenuItem miClientes, miMascotas, miCitas, miUsuarios, miPagos, miHistorial, miProductos;
+    private JButton btnUsuarios, btnCitas, btnClientes, btnMascotas, btnPagos, btnHistorial, btnProductos;
 
 
     private JMenuItem miServicios;
@@ -135,6 +142,7 @@ public class MainWindow extends JFrame {
         clienteView   = new ClienteViewForm(clienteService);
         mascotaView   = new MascotaViewForm(mascotaService);
         citasView     = new CitasViewForm(citaService);
+        productosView  = new ProductosViewForm(productoService);
         serviciosView = new ServiciosViewForm(serviciosService);
         // --- INICIALIZAR VISTA HISTORIAL ---
         historialView = new HistorialViewForm(historialService, mascotaService);
@@ -149,6 +157,7 @@ public class MainWindow extends JFrame {
         content.add(clienteView.getContentPane(), "clientes");
         content.add(mascotaView.getContentPane(), "mascotas");
         content.add(citasView.getContentPane(), "citas");
+        content.add(productosView.getContentPane(), "productos");
         
         content.add(serviciosView.getContentPane(), "servicios");
         // --- AGREGAR HISTORIAL AL CARDLAYOUT ---
@@ -185,6 +194,7 @@ public class MainWindow extends JFrame {
         // --- NUEVO ITEM MENU ---
         miHistorial = new JMenuItem("Historial Clínico");
         miUsuarios = new JMenuItem("Usuarios");
+        miProductos = new JMenuItem("Productos");
         
         miServicios = new JMenuItem("Servicios");
         
@@ -197,6 +207,7 @@ public class MainWindow extends JFrame {
         mModulos.add(miHistorial);
         // -----------------------
         mModulos.add(miUsuarios);
+        mModulos.add(miProductos);
         mModulos.add(miPagos);
 
         mModulos.add(miServicios);
@@ -215,6 +226,7 @@ public class MainWindow extends JFrame {
         miMascotas.addActionListener(e -> { cards.show(content, "mascotas"); if (mascotaView != null) mascotaView.recargarTabla(); });
         miCitas.addActionListener(e -> { cards.show(content, "citas"); if (citasView != null) citasView.recargarTabla(); });
         miUsuarios.addActionListener(e -> { cards.show(content, "usuarios"); if (usuariosPanel != null) usuariosPanel.cargarUsuarios(); });
+        miProductos.addActionListener(e -> {cards.show(content, "productos");if (productosView != null) productosView.recargarTabla();});
         
         // --- ACCION NUEVO ITEM ---
         miHistorial.addActionListener(e -> { 
@@ -259,6 +271,7 @@ public class MainWindow extends JFrame {
         // ---------------------------
         
         btnClientes = mkNav("Clientes");
+        btnProductos  = mkNav("Productos");
         btnMascotas = mkNav("Mascotas");
         
         btnServicios = mkNav("Servicios");
@@ -273,6 +286,7 @@ public class MainWindow extends JFrame {
         // -----------------------------
         menu.add(btnClientes);
         menu.add(btnMascotas);
+        menu.add(btnProductos);
         
         menu.add(btnServicios);
         menu.add(btnPagos);
@@ -292,6 +306,8 @@ public class MainWindow extends JFrame {
         btnClientes.addActionListener(e -> { cards.show(content, "clientes"); if (clienteView != null) clienteView.recargarTabla(); });
         btnCitas.addActionListener(e -> { cards.show(content, "citas"); if (citasView != null) citasView.recargarTabla(); });
         btnMascotas.addActionListener(e -> { cards.show(content, "mascotas"); if (mascotaView != null) mascotaView.recargarTabla(); });
+        btnProductos.addActionListener(e -> {cards.show(content, "productos");if (productosView != null) productosView.recargarTabla();});
+
         
         btnServicios.addActionListener(e -> { cards.show(content, "servicios"); if (serviciosView != null) serviciosView.recargarTabla(); });
         // --- ACCION BOTON HISTORIAL ---
@@ -814,10 +830,13 @@ public class MainWindow extends JFrame {
     public JMenuItem getMiUsuarios() { return miUsuarios; }
     public JMenuItem getMiHistorial() { return miHistorial; }
     public JMenuItem getMiPagos() { return miPagos; }
+    public JMenuItem getMiProductos() { return miProductos; }
+  
     public JButton getBtnClientes() { return btnClientes; }
     public JButton getBtnMascotas() { return btnMascotas; }
     public JButton getBtnCitas() { return btnCitas; }
     public JButton getBtnUsuarios() { return btnUsuarios; }
+    public JButton   getBtnProductos() { return btnProductos; }
     public JButton getBtnPagos() { return btnPagos; }
     public JButton getBtnHistorial() { return btnHistorial; }
 

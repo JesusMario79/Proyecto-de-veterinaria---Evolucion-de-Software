@@ -15,6 +15,7 @@ public class PermisosAdmin implements IPermisosRol {
         mainWindow.getMiMascotas().setVisible(true);
         mainWindow.getMiCitas().setVisible(true);
         mainWindow.getMiUsuarios().setVisible(true); // El Admin sí ve Usuarios
+        mainWindow.getMiProductos().setVisible(true);
         mainWindow.getMiPagos().setVisible(true);
 
         // Menú Lateral
@@ -22,6 +23,7 @@ public class PermisosAdmin implements IPermisosRol {
         mainWindow.getBtnMascotas().setVisible(true);
         mainWindow.getBtnCitas().setVisible(true);
         mainWindow.getBtnUsuarios().setVisible(true); // El Admin sí ve Usuarios
+        mainWindow.getBtnProductos().setVisible(true);
        
         mainWindow.getBtnHistorial().setVisible(true); // Historial
         mainWindow.getMiHistorial().setVisible(true);  //Historial
