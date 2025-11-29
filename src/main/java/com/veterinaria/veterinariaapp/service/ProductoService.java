@@ -2,38 +2,79 @@ package com.veterinaria.veterinariaapp.service;
 
 import com.veterinaria.veterinariaapp.model.Producto;
 import com.veterinaria.veterinariaapp.repository.IProductoRepository;
-import com.veterinaria.veterinariaapp.repository.ProductoRepository;
-import java.sql.SQLException;
+
 import java.util.List;
 
+/**
+ * Capa de servicio para la gestión de Productos.
+ * Contiene toda la lógica de negocio (reglas de validación).
+ * Cumple con SRP y DIP.
+ */
 public class ProductoService {
 
-    private final IProductoRepository repo;
+    private final IProductoRepository productoRepo;
 
-    public ProductoService() {
-        this.repo = new ProductoRepository();
+    /**
+     * Recibe la implementación de IProductoRepository por inyección
+     * (respeta el Principio de Inversión de Dependencias).
+     */
+    public ProductoService(IProductoRepository productoRepo) {
+        this.productoRepo = productoRepo;
     }
 
-    public List<Producto> listar() throws SQLException {
-        return repo.findAll();
+    public List<Producto> listarProductos() throws Exception {
+        return productoRepo.findAll();
     }
 
-    public List<Producto> buscar(String q) throws SQLException {
+    public List<Producto> buscarPorNombre(String q) throws Exception {
         if (q == null || q.trim().isEmpty()) {
-            return listar();
+            return listarProductos();
         }
-        return repo.searchByNombre(q.trim());
+        return productoRepo.searchByNombre(q.trim());
     }
 
-    public void guardar(Producto p) throws SQLException {
-        if (p.getId() == 0) {
-            repo.insert(p);
-        } else {
-            repo.update(p);
-        }
+    public void agregarProducto(Producto producto) throws Exception, IllegalArgumentException {
+        validarProducto(producto);
+        // Para un producto nuevo asumimos id = 0 ó null
+        productoRepo.insert(producto);
     }
 
-    public void eliminar(int id) throws SQLException {
-        repo.delete(id);
+    public void actualizarProducto(Producto producto) throws Exception, IllegalArgumentException {
+        if (producto.getId() <= 0) {
+            throw new IllegalArgumentException("ID de producto inválido para actualizar.");
+        }
+        validarProducto(producto);
+        productoRepo.update(producto);
+    }
+
+    public void eliminarProducto(int id) throws Exception {
+        if (id <= 0) {
+            throw new IllegalArgumentException("ID de producto inválido para eliminar.");
+        }
+        productoRepo.delete(id);
+    }
+
+    // ====== Reglas de negocio / validación ======
+    private void validarProducto(Producto producto) {
+        if (producto == null) {
+            throw new IllegalArgumentException("El producto no puede ser nulo.");
+        }
+
+        if (producto.getNombre() == null || producto.getNombre().trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre del producto es obligatorio.");
+        }
+
+        // La categoría puedes volverla obligatoria o no, según tu profe.
+        if (producto.getCategoria() == null || producto.getCategoria().trim().isEmpty()) {
+            throw new IllegalArgumentException("La categoría del producto es obligatoria.");
+        }
+
+        if (producto.getPrecio() < 0) {
+            throw new IllegalArgumentException("El precio no puede ser negativo.");
+        }
+
+        if (producto.getStock() < 0) {
+            throw new IllegalArgumentException("El stock no puede ser negativo.");
+        }
     }
 }
