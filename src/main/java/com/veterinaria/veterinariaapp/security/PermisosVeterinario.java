@@ -14,11 +14,14 @@ public class PermisosVeterinario implements IPermisosRol {
         mainWindow.getMiMascotas().setVisible(true);  // Muestra Mascotas
         mainWindow.getMiCitas().setVisible(true);     // Muestra Citas
         mainWindow.getMiUsuarios().setVisible(false); // Oculta Usuarios
+        mainWindow.getMiProductos().setVisible(true);
 
         // Menú Lateral
         mainWindow.getBtnClientes().setVisible(false); // Oculta Clientes
         mainWindow.getBtnMascotas().setVisible(true);  // Muestra Mascotas
         mainWindow.getBtnCitas().setVisible(true);     // Muestra Citas
         mainWindow.getBtnUsuarios().setVisible(false); // Oculta Usuarios
+        mainWindow.getBtnProductos().setVisible(true);
+
     }
 }
