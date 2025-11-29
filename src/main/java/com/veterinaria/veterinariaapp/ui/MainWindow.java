@@ -12,7 +12,8 @@ import com.veterinaria.veterinariaapp.repository.IMascotaRepository;
 import com.veterinaria.veterinariaapp.repository.MascotaRepository;
 import com.veterinaria.veterinariaapp.repository.IUsuarioRepository;
 import com.veterinaria.veterinariaapp.repository.UsuarioRepository;
-
+import com.veterinaria.veterinariaapp.repository.IServiciosRepository;
+import com.veterinaria.veterinariaapp.repository.ServicioRepository;
 // --- NUEVOS IMPORTS PARA HISTORIAL ---
 import com.veterinaria.veterinariaapp.repository.IHistorialRepository;
 import com.veterinaria.veterinariaapp.repository.HistorialRepository;
@@ -29,6 +30,8 @@ import com.veterinaria.veterinariaapp.service.CitaService;
 import com.veterinaria.veterinariaapp.service.ClienteService;
 import com.veterinaria.veterinariaapp.service.MascotaService;
 import com.veterinaria.veterinariaapp.service.UserService;
+// Servicios (NUEVO)
+import com.veterinaria.veterinariaapp.service.ServiciosService;
 
 // OCP
 import com.veterinaria.veterinariaapp.security.IPermisosRol;
@@ -84,11 +87,14 @@ public class MainWindow extends JFrame {
     // --------------------------------------
     private final IPagoRepository pagoRepo = new PagoRepository();
 
+    // REPOSITORIOS DE SERVICIOS (NUEVO)
+    private final IServiciosRepository serviciosRepo = new ServicioRepository();
     private final CitaService citaService = new CitaService(citaRepo, mascotaRepo);
     private final ClienteService clienteService = new ClienteService(clienteRepo);
     private final MascotaService mascotaService = new MascotaService(mascotaRepo, clienteRepo);
     private final UserService userService = new UserService(usuarioRepo);
     private final AuthService authService = new AuthService(usuarioRepo);
+    private final ServiciosService serviciosService = new ServiciosService(serviciosRepo);
     
     // --- NUEVO SERVICIO DE HISTORIAL ---
     private final HistorialService historialService = new HistorialService(historialRepo);
@@ -104,6 +110,8 @@ public class MainWindow extends JFrame {
     private ClienteViewForm clienteView;
     private MascotaViewForm mascotaView;
     private UsuariosPanel usuariosPanel;
+    
+    private ServiciosViewForm serviciosView;
     private PagoViewForm pagoView;
     private HistorialViewForm historialView;
 
@@ -112,6 +120,9 @@ public class MainWindow extends JFrame {
     private JButton btnUsuarios, btnCitas, btnClientes, btnMascotas, btnPagos, btnHistorial;
 
 
+    private JMenuItem miServicios;
+    private JButton btnServicios;
+    
     public MainWindow() {
         setTitle("Veterinario — Panel Principal");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -124,7 +135,7 @@ public class MainWindow extends JFrame {
         clienteView   = new ClienteViewForm(clienteService);
         mascotaView   = new MascotaViewForm(mascotaService);
         citasView     = new CitasViewForm(citaService);
-        
+        serviciosView = new ServiciosViewForm(serviciosService);
         // --- INICIALIZAR VISTA HISTORIAL ---
         historialView = new HistorialViewForm(historialService, mascotaService);
         // -----------------------------------
@@ -139,6 +150,7 @@ public class MainWindow extends JFrame {
         content.add(mascotaView.getContentPane(), "mascotas");
         content.add(citasView.getContentPane(), "citas");
         
+        content.add(serviciosView.getContentPane(), "servicios");
         // --- AGREGAR HISTORIAL AL CARDLAYOUT ---
         content.add(historialView.getContentPane(), "historial");
         // ---------------------------------------
@@ -173,6 +185,9 @@ public class MainWindow extends JFrame {
         // --- NUEVO ITEM MENU ---
         miHistorial = new JMenuItem("Historial Clínico");
         miUsuarios = new JMenuItem("Usuarios");
+        
+        miServicios = new JMenuItem("Servicios");
+        
         miPagos = new JMenuItem("Pagos");
 
         mModulos.add(miClientes);
@@ -184,6 +199,7 @@ public class MainWindow extends JFrame {
         mModulos.add(miUsuarios);
         mModulos.add(miPagos);
 
+        mModulos.add(miServicios);
         bar.add(mArchivo);
         bar.add(mModulos);
 
@@ -211,6 +227,7 @@ public class MainWindow extends JFrame {
         });
         
 
+        miServicios.addActionListener(e -> { cards.show(content, "servicios"); if (serviciosView != null) serviciosView.recargarTabla(); });
         miCerrarSesion.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_L, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         miSalir.setAccelerator        (KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Q, java.awt.event.InputEvent.CTRL_DOWN_MASK));
 
@@ -243,6 +260,8 @@ public class MainWindow extends JFrame {
         
         btnClientes = mkNav("Clientes");
         btnMascotas = mkNav("Mascotas");
+        
+        btnServicios = mkNav("Servicios");
         btnPagos = mkNav("Pagos");
         JButton btnCerrar = mkNav("Cerrar sesión");
 
@@ -254,6 +273,8 @@ public class MainWindow extends JFrame {
         // -----------------------------
         menu.add(btnClientes);
         menu.add(btnMascotas);
+        
+        menu.add(btnServicios);
         menu.add(btnPagos);
 
         side.add(menu, BorderLayout.CENTER);
@@ -272,6 +293,7 @@ public class MainWindow extends JFrame {
         btnCitas.addActionListener(e -> { cards.show(content, "citas"); if (citasView != null) citasView.recargarTabla(); });
         btnMascotas.addActionListener(e -> { cards.show(content, "mascotas"); if (mascotaView != null) mascotaView.recargarTabla(); });
         
+        btnServicios.addActionListener(e -> { cards.show(content, "servicios"); if (serviciosView != null) serviciosView.recargarTabla(); });
         // --- ACCION BOTON HISTORIAL ---
         btnHistorial.addActionListener(e -> { 
             cards.show(content, "historial"); 
