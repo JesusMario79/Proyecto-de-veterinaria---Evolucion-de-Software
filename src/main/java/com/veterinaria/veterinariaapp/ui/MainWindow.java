@@ -13,11 +13,16 @@ import com.veterinaria.veterinariaapp.repository.MascotaRepository;
 import com.veterinaria.veterinariaapp.repository.IUsuarioRepository;
 import com.veterinaria.veterinariaapp.repository.UsuarioRepository;
 
+// --- NUEVOS IMPORTS PARA HISTORIAL ---
+import com.veterinaria.veterinariaapp.repository.IHistorialRepository;
+import com.veterinaria.veterinariaapp.repository.HistorialRepository;
+import com.veterinaria.veterinariaapp.service.HistorialService;
+// -------------------------------------
+
 // Dashboard (nuevo)
 import com.veterinaria.veterinariaapp.repository.IDashboardRepository;
 import com.veterinaria.veterinariaapp.repository.DashboardRepository;
 import com.veterinaria.veterinariaapp.service.DashboardService;
-
 // Servicios
 import com.veterinaria.veterinariaapp.service.AuthService;
 import com.veterinaria.veterinariaapp.service.CitaService;
@@ -45,7 +50,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.*;
 import java.util.List;
-
 // Fechas (solo por si quieres formatear distinto más adelante)
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -61,7 +65,6 @@ public class MainWindow extends JFrame {
 
     private final Map<String,Integer> dataCitasPorDia = new LinkedHashMap<>();
     private final Map<String,Integer> dataEspecies    = new LinkedHashMap<>();
-
     // NUEVO: en vez de usar BarChartPanel directo, usamos un pager
     private final CitasChartPager barCitasPager = new CitasChartPager(dataCitasPorDia);
     private final PieChartPanel pieEspecies  = new PieChartPanel(dataEspecies);
@@ -75,6 +78,10 @@ public class MainWindow extends JFrame {
     private final IClienteRepository clienteRepo = new ClienteRepository();
     private final IMascotaRepository mascotaRepo = new MascotaRepository();
     private final IUsuarioRepository usuarioRepo = new UsuarioRepository();
+    
+    // --- NUEVO REPOSITORIO DE HISTORIAL ---
+    private final IHistorialRepository historialRepo = new HistorialRepository();
+    // --------------------------------------
     private final IPagoRepository pagoRepo = new PagoRepository();
 
     private final CitaService citaService = new CitaService(citaRepo, mascotaRepo);
@@ -82,7 +89,11 @@ public class MainWindow extends JFrame {
     private final MascotaService mascotaService = new MascotaService(mascotaRepo, clienteRepo);
     private final UserService userService = new UserService(usuarioRepo);
     private final AuthService authService = new AuthService(usuarioRepo);
-
+    
+    // --- NUEVO SERVICIO DE HISTORIAL ---
+    private final HistorialService historialService = new HistorialService(historialRepo);
+    // -----------------------------------
+    
     // Dashboard service/repo (nuevo)
     private final IDashboardRepository dashboardRepo = new DashboardRepository();
     private final DashboardService dashboardService = new DashboardService(dashboardRepo);
@@ -94,10 +105,12 @@ public class MainWindow extends JFrame {
     private MascotaViewForm mascotaView;
     private UsuariosPanel usuariosPanel;
     private PagoViewForm pagoView;
+    private HistorialViewForm historialView;
 
     // Menús/botones
-    private JMenuItem miClientes, miMascotas, miCitas, miUsuarios, miPagos;
-    private JButton btnUsuarios, btnCitas, btnClientes, btnMascotas, btnPagos;
+    private JMenuItem miClientes, miMascotas, miCitas, miUsuarios, miPagos, miHistorial;
+    private JButton btnUsuarios, btnCitas, btnClientes, btnMascotas, btnPagos, btnHistorial;
+
 
     public MainWindow() {
         setTitle("Veterinario — Panel Principal");
@@ -106,21 +119,30 @@ public class MainWindow extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        setJMenuBar(buildMenuBar());
-        add(buildSidebar(), BorderLayout.WEST);
-
-        content.add(buildDashboard(), "dashboard");
-
+        // Inicializar vistas
         usuariosPanel = new UsuariosPanel(userService);
         clienteView   = new ClienteViewForm(clienteService);
         mascotaView   = new MascotaViewForm(mascotaService);
         citasView     = new CitasViewForm(citaService);
+        
+        // --- INICIALIZAR VISTA HISTORIAL ---
+        historialView = new HistorialViewForm(historialService, mascotaService);
+        // -----------------------------------
         pagoView = new PagoViewForm(pagoService);
 
+        setJMenuBar(buildMenuBar());
+        add(buildSidebar(), BorderLayout.WEST);
+
+        content.add(buildDashboard(), "dashboard");
         content.add(usuariosPanel, "usuarios");
         content.add(clienteView.getContentPane(), "clientes");
         content.add(mascotaView.getContentPane(), "mascotas");
         content.add(citasView.getContentPane(), "citas");
+        
+        // --- AGREGAR HISTORIAL AL CARDLAYOUT ---
+        content.add(historialView.getContentPane(), "historial");
+        // ---------------------------------------
+        
         content.add(pagoView.getContentPane(), "pagos");
         add(content, BorderLayout.CENTER);
 
@@ -128,7 +150,6 @@ public class MainWindow extends JFrame {
 
         cards.show(content, "dashboard");
         cargarDashboard();
-
         // Refrescar al recuperar foco (por si guardaste una cita y regresas)
         addWindowFocusListener(new WindowAdapter() {
             @Override public void windowGainedFocus(WindowEvent e) { cargarDashboard(); }
@@ -148,11 +169,18 @@ public class MainWindow extends JFrame {
         miClientes = new JMenuItem("Clientes");
         miMascotas = new JMenuItem("Mascotas");
         miCitas    = new JMenuItem("Citas");
+        
+        // --- NUEVO ITEM MENU ---
+        miHistorial = new JMenuItem("Historial Clínico");
         miUsuarios = new JMenuItem("Usuarios");
         miPagos = new JMenuItem("Pagos");
+
         mModulos.add(miClientes);
         mModulos.add(miMascotas);
         mModulos.add(miCitas);
+        // --- AGREGAR AL MENU ---
+        mModulos.add(miHistorial);
+        // -----------------------
         mModulos.add(miUsuarios);
         mModulos.add(miPagos);
 
@@ -171,6 +199,13 @@ public class MainWindow extends JFrame {
         miMascotas.addActionListener(e -> { cards.show(content, "mascotas"); if (mascotaView != null) mascotaView.recargarTabla(); });
         miCitas.addActionListener(e -> { cards.show(content, "citas"); if (citasView != null) citasView.recargarTabla(); });
         miUsuarios.addActionListener(e -> { cards.show(content, "usuarios"); if (usuariosPanel != null) usuariosPanel.cargarUsuarios(); });
+        
+        // --- ACCION NUEVO ITEM ---
+        miHistorial.addActionListener(e -> { 
+            cards.show(content, "historial"); 
+            if (historialView != null) historialView.recargarDatos(); 
+        });
+        // -------------------------
         miPagos.addActionListener(e -> { 
             cards.show(content, "pagos"); 
         });
@@ -201,6 +236,11 @@ public class MainWindow extends JFrame {
         JButton btnInicio = mkNav("Inicio");
         btnUsuarios = mkNav("Usuarios");
         btnCitas    = mkNav("Citas");
+        
+        // --- NUEVO BOTON LATERAL ---
+        btnHistorial = mkNav("Historial");
+        // ---------------------------
+        
         btnClientes = mkNav("Clientes");
         btnMascotas = mkNav("Mascotas");
         btnPagos = mkNav("Pagos");
@@ -209,6 +249,9 @@ public class MainWindow extends JFrame {
         menu.add(btnInicio);
         menu.add(btnUsuarios);
         menu.add(btnCitas);
+        // --- AGREGAR BOTON AL MENU ---
+        menu.add(btnHistorial);
+        // -----------------------------
         menu.add(btnClientes);
         menu.add(btnMascotas);
         menu.add(btnPagos);
@@ -219,7 +262,7 @@ public class MainWindow extends JFrame {
         south.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
         south.add(btnCerrar, BorderLayout.SOUTH);
         side.add(south, BorderLayout.SOUTH);
-
+        
         btnInicio.addActionListener(e -> {
             cards.show(content, "dashboard");
             cargarDashboard();
@@ -228,6 +271,13 @@ public class MainWindow extends JFrame {
         btnClientes.addActionListener(e -> { cards.show(content, "clientes"); if (clienteView != null) clienteView.recargarTabla(); });
         btnCitas.addActionListener(e -> { cards.show(content, "citas"); if (citasView != null) citasView.recargarTabla(); });
         btnMascotas.addActionListener(e -> { cards.show(content, "mascotas"); if (mascotaView != null) mascotaView.recargarTabla(); });
+        
+        // --- ACCION BOTON HISTORIAL ---
+        btnHistorial.addActionListener(e -> { 
+            cards.show(content, "historial"); 
+            if (historialView != null) historialView.recargarDatos(); 
+        });
+        // ------------------------------
         btnPagos.addActionListener(e -> {
             cards.show(content, "pagos");
         });
@@ -238,7 +288,6 @@ public class MainWindow extends JFrame {
             new LoginFrame(authService).setVisible(true);
             dispose();
         });
-
         return side;
     }
 
@@ -273,7 +322,6 @@ public class MainWindow extends JFrame {
         charts.setBorder(BorderFactory.createEmptyBorder(12,0,0,0));
         charts.add(chartPanel("Citas por día", barCitasPager));
         charts.add(chartPanel("Distribución de especies", pieEspecies));
-
         JPanel center = new JPanel(new BorderLayout());
         center.add(kpis, BorderLayout.NORTH);
         center.add(charts, BorderLayout.CENTER);
@@ -314,7 +362,8 @@ public class MainWindow extends JFrame {
         return panel;
     }
 
-    /** Carga datos reales y refresca el dashboard. */
+    /** Carga datos reales y refresca el dashboard.
+    */
     private void cargarDashboard() {
         try {
             // KPIs
@@ -324,7 +373,6 @@ public class MainWindow extends JFrame {
             lblKpiCitas.setText(String.valueOf(citas));
             lblKpiMascotas.setText(String.valueOf(mascotas));
             lblKpiClientes.setText(String.valueOf(clientes));
-
             // Barras: ventana más amplia para que el pager tenga material (p. ej., 3 meses hacia atrás y adelante)
             final int DAYS_BACK = 90;
             final int DAYS_FORWARD = 90;
@@ -334,13 +382,10 @@ public class MainWindow extends JFrame {
 
             // el pager muestra SOLO los días con citas y paginados de 5 en 5
             barCitasPager.setData(dataCitasPorDia);
-
-
             // Pie: top 5 especies
             dataEspecies.clear();
             dataEspecies.putAll(dashboardService.distribucionEspecies(5));
             pieEspecies.setData(dataEspecies);
-
             lblUpdatedAt.setText("Última actualización: " + java.time.LocalDateTime.now().withNano(0));
 
         } catch (Exception ex) {
@@ -361,7 +406,6 @@ public class MainWindow extends JFrame {
         private final java.util.List<Map.Entry<String,Integer>> nonZero = new ArrayList<>();
         private int PAGE_SIZE = 5;
         private int page = 0;
-
         CitasChartPager(Map<String,Integer> rawData){
             super(new BorderLayout());
             chart = new BarChartPanel(new LinkedHashMap<>());
@@ -416,7 +460,6 @@ public class MainWindow extends JFrame {
 
             btnPrev.setEnabled(page>0);
             btnNext.setEnabled(to < total);
-
             if (total==0){
                 lblInfo.setText("No hay días con citas en el período.");
             } else {
@@ -440,7 +483,6 @@ public class MainWindow extends JFrame {
 
         // Mostrar números encima de las barras
         private final boolean SHOW_VALUES = true;
-
         BarChartPanel(Map<String,Integer> data){
             this.data = new LinkedHashMap<>(data);
             this.keys = this.data.keySet().toArray(new String[0]);
@@ -459,16 +501,17 @@ public class MainWindow extends JFrame {
         }
 
         private void updateTooltip(int mx, int my){
-            if (keys.length == 0) { setToolTipText(null); return; }
+            if (keys.length == 0) { setToolTipText(null);
+            return; }
             int w=getWidth(), h=getHeight();
             int marginLeft=40, marginTop=40, marginRight=40, marginBottom=56;
 
             int plotX = marginLeft, plotY = marginTop + 20;
             int plotW = w - marginLeft - marginRight;
             int plotH = h - marginTop - marginBottom - 20;
-
             int n = keys.length;
-            if (n == 0) { setToolTipText(null); return; }
+            if (n == 0) { setToolTipText(null); return;
+            }
 
             double slot = plotW / (double) n;
             int max = Math.max(1, data.values().stream().mapToInt(i->i).max().orElse(1));
@@ -478,10 +521,8 @@ public class MainWindow extends JFrame {
                 double slotX = plotX + i*slot;
                 int bw = (int)Math.max(16, Math.min(40, Math.round(slot*0.6)));
                 int x = (int)Math.round(slotX + (slot - bw)/2.0);
-
                 int barH = (int)Math.round((data.get(k) / (double)max) * (plotH - 10));
                 int y = plotY + plotH - barH;
-
                 if (mx>=x && mx<=x+bw && my>=y && my<=plotY + plotH){
                     setToolTipText(k + " → " + data.get(k));
                     return;
@@ -497,15 +538,12 @@ public class MainWindow extends JFrame {
             int w=getWidth(), h=getHeight();
 
             int marginLeft=40, marginTop=40, marginRight=40, marginBottom=56;
-
             int plotX = marginLeft, plotY = marginTop + 20;
             int plotW = w - marginLeft - marginRight;
             int plotH = h - marginTop - marginBottom - 20;
-
             // Fondo
             g2.setColor(Color.WHITE);
             g2.fillRect(0,0,w,h);
-
             // Leyenda “Citas por día”
             g2.setFont(TITLE_FONT);
             int legendX = plotX + 10, legendY = marginTop + 14;
@@ -524,18 +562,21 @@ public class MainWindow extends JFrame {
             // Ejes
             g2.setColor(AXIS);
             g2.drawLine(plotX, plotY, plotX, plotY+plotH);          // Y
-            g2.drawLine(plotX, plotY+plotH, plotX+plotW, plotY+plotH); // X
+            g2.drawLine(plotX, plotY+plotH, plotX+plotW, plotY+plotH);
+            // X
 
             // Datos
-            if (data.isEmpty()) { g2.dispose(); return; }
+            if (data.isEmpty()) { g2.dispose();
+            return; }
             int max = Math.max(1, data.values().stream().mapToInt(i->i).max().orElse(1));
             String[] labels = keys;
             int n = labels.length;
-            if (n == 0) { g2.dispose(); return; }
+            if (n == 0) { g2.dispose(); return;
+            }
 
-            // slot = ancho por categoría; barra centrada
+            // slot = ancho por categoría;
+            // barra centrada
             double slot = plotW / (double) n;
-
             // Dibujar barras
             int i=0;
             int[] barTopX = new int[n];
@@ -544,7 +585,6 @@ public class MainWindow extends JFrame {
                 double slotX = plotX + i*slot;
                 int bw = (int)Math.max(16, Math.min(40, Math.round(slot*0.6)));
                 int x = (int)Math.round(slotX + (slot - bw)/2.0);
-
                 int barH = (int)Math.round((data.get(k) / (double)max) * (plotH - 10));
                 int y = plotY + plotH - barH;
 
@@ -570,7 +610,6 @@ public class MainWindow extends JFrame {
                     g2.setColor(Color.WHITE);
                     g2.fillRoundRect(tx - vfm.stringWidth(val)/2 - 3, ty - vfm.getAscent(),
                                      vfm.stringWidth(val) + 6, vfm.getAscent()+2, 6, 6);
-
                     g2.setColor(new Color(60,60,60));
                     g2.drawString(val, tx - vfm.stringWidth(val)/2, ty);
                 }
@@ -581,10 +620,10 @@ public class MainWindow extends JFrame {
             FontMetrics fm = g2.getFontMetrics();
             g2.setColor(new Color(80,80,80));
 
-            boolean rotate = slot < (fm.charWidth('0')*6 + 8); // si hay poco espacio, inclinamos
+            boolean rotate = slot < (fm.charWidth('0')*6 + 8);
+            // si hay poco espacio, inclinamos
             for (int idx=0; idx<n; idx++){
                 String k = labels[idx];
-
                 // Si recibimos d/M/yyyy, lo dejamos así; recortamos si hay muy poco ancho
                 String txt = k;
                 if (slot < 50 && k.length() >= 5){
@@ -596,7 +635,6 @@ public class MainWindow extends JFrame {
                 double slotX = plotX + idx*slot;
                 int centerX = (int)Math.round(slotX + slot/2.0);
                 int baseY = plotY + plotH + 20;
-
                 if (rotate){
                     g2.translate(centerX, baseY);
                     g2.rotate(Math.toRadians(-35));
@@ -619,8 +657,8 @@ public class MainWindow extends JFrame {
 
         private final Color[] colors={ new Color(245,96,111), new Color(84,141,212), new Color(254,194,79),
                                        new Color(85,192,187), new Color(155,125,230), new Color(255,150,100) };
-
-        static class Slice { String label; int value; int start; int extent; Color color; }
+        static class Slice { String label; int value; int start; int extent; Color color;
+        }
 
         PieChartPanel(Map<String,Integer> data){
             this.data = new LinkedHashMap<>(data);
@@ -656,7 +694,8 @@ public class MainWindow extends JFrame {
         }
 
         private void updateTooltip(int mx, int my){
-            if (slices.isEmpty()){ setToolTipText(null); return; }
+            if (slices.isEmpty()){ setToolTipText(null);
+            return; }
             int w=getWidth(), h=getHeight();
 
             int legendH = 24;
@@ -692,13 +731,13 @@ public class MainWindow extends JFrame {
             int w=getWidth(), h=getHeight();
             int legendH = 24;
             int size=Math.min(w, h-legendH) - 40;
-            if(size<60){ g2.dispose(); return; }
+            if(size<60){ g2.dispose(); return;
+            }
             int x=(w-size)/2, y=legendH + (h-legendH-size)/2;
 
             int total=data.values().stream().mapToInt(i->i).sum();
             if(total==0){ g2.dispose(); return; }
             if (slices.isEmpty()) rebuildSlices();
-
             for (Slice s: slices){
                 g2.setColor(s.color);
                 g2.fillArc(x,y,size,size,s.start,s.extent);
@@ -713,7 +752,8 @@ public class MainWindow extends JFrame {
                 g2.drawString(s.label, lx + 20, ly);
                 lx += 20 + g2.getFontMetrics().stringWidth(s.label) + 24;
                 if (lx > w-120) {
-                    lx = 20; ly += 18;
+                    lx = 20;
+                    ly += 18;
                 }
             }
 
@@ -744,19 +784,24 @@ public class MainWindow extends JFrame {
     }
 
     // Getters para estrategias de permisos
-    public JMenuItem getMiClientes() { return miClientes; }
+    public JMenuItem getMiClientes() { return miClientes;
+    }
     public JMenuItem getMiMascotas() { return miMascotas; }
-    public JMenuItem getMiCitas() { return miCitas; }
+    public JMenuItem getMiCitas() { return miCitas;
+    }
     public JMenuItem getMiUsuarios() { return miUsuarios; }
+    public JMenuItem getMiHistorial() { return miHistorial; }
     public JMenuItem getMiPagos() { return miPagos; }
     public JButton getBtnClientes() { return btnClientes; }
     public JButton getBtnMascotas() { return btnMascotas; }
     public JButton getBtnCitas() { return btnCitas; }
     public JButton getBtnUsuarios() { return btnUsuarios; }
     public JButton getBtnPagos() { return btnPagos; }
+    public JButton getBtnHistorial() { return btnHistorial; }
 
     public static void main(String[] args) {
-        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception e) { e.printStackTrace(); }
+        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) { e.printStackTrace(); }
         SwingUtilities.invokeLater(() -> new MainWindow().setVisible(true));
     }
 }
