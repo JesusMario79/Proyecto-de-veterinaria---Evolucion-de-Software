@@ -12,6 +12,8 @@ import com.veterinaria.veterinariaapp.repository.IMascotaRepository;
 import com.veterinaria.veterinariaapp.repository.MascotaRepository;
 import com.veterinaria.veterinariaapp.repository.IUsuarioRepository;
 import com.veterinaria.veterinariaapp.repository.UsuarioRepository;
+import com.veterinaria.veterinariaapp.repository.IProductoRepository;
+import com.veterinaria.veterinariaapp.repository.ProductoRepository;
 
 // Dashboard (nuevo)
 import com.veterinaria.veterinariaapp.repository.IDashboardRepository;
@@ -24,6 +26,7 @@ import com.veterinaria.veterinariaapp.service.CitaService;
 import com.veterinaria.veterinariaapp.service.ClienteService;
 import com.veterinaria.veterinariaapp.service.MascotaService;
 import com.veterinaria.veterinariaapp.service.UserService;
+import com.veterinaria.veterinariaapp.service.ProductoService;
 
 // OCP
 import com.veterinaria.veterinariaapp.security.IPermisosRol;
@@ -75,6 +78,8 @@ public class MainWindow extends JFrame {
     private final MascotaService mascotaService = new MascotaService(mascotaRepo, clienteRepo);
     private final UserService userService = new UserService(usuarioRepo);
     private final AuthService authService = new AuthService(usuarioRepo);
+    private final IProductoRepository productoRepo = new ProductoRepository();
+    private final ProductoService productoService = new ProductoService(productoRepo);
 
     // Dashboard service/repo (nuevo)
     private final IDashboardRepository dashboardRepo = new DashboardRepository();
@@ -85,10 +90,13 @@ public class MainWindow extends JFrame {
     private ClienteViewForm clienteView;
     private MascotaViewForm mascotaView;
     private UsuariosPanel usuariosPanel;
+    private ProductosViewForm productosView;
+
 
     // Menús/botones
-    private JMenuItem miClientes, miMascotas, miCitas, miUsuarios;
-    private JButton btnUsuarios, btnCitas, btnClientes, btnMascotas;
+   private JMenuItem miClientes, miMascotas, miCitas, miUsuarios, miProductos;
+   private JButton btnUsuarios, btnCitas, btnClientes, btnMascotas, btnProductos;
+
 
     public MainWindow() {
         setTitle("Veterinario — Panel Principal");
@@ -106,11 +114,13 @@ public class MainWindow extends JFrame {
         clienteView   = new ClienteViewForm(clienteService);
         mascotaView   = new MascotaViewForm(mascotaService);
         citasView     = new CitasViewForm(citaService);
+        productosView  = new ProductosViewForm(productoService);
 
         content.add(usuariosPanel, "usuarios");
         content.add(clienteView.getContentPane(), "clientes");
         content.add(mascotaView.getContentPane(), "mascotas");
         content.add(citasView.getContentPane(), "citas");
+        content.add(productosView.getContentPane(), "productos");
         add(content, BorderLayout.CENTER);
 
         aplicarPermisosSegunRol();
@@ -138,10 +148,12 @@ public class MainWindow extends JFrame {
         miMascotas = new JMenuItem("Mascotas");
         miCitas    = new JMenuItem("Citas");
         miUsuarios = new JMenuItem("Usuarios");
+        miProductos = new JMenuItem("Productos");
         mModulos.add(miClientes);
         mModulos.add(miMascotas);
         mModulos.add(miCitas);
         mModulos.add(miUsuarios);
+        mModulos.add(miProductos);
 
         bar.add(mArchivo);
         bar.add(mModulos);
@@ -158,6 +170,7 @@ public class MainWindow extends JFrame {
         miMascotas.addActionListener(e -> { cards.show(content, "mascotas"); if (mascotaView != null) mascotaView.recargarTabla(); });
         miCitas.addActionListener(e -> { cards.show(content, "citas"); if (citasView != null) citasView.recargarTabla(); });
         miUsuarios.addActionListener(e -> { cards.show(content, "usuarios"); if (usuariosPanel != null) usuariosPanel.cargarUsuarios(); });
+        miProductos.addActionListener(e -> {cards.show(content, "productos");if (productosView != null) productosView.recargarTabla();});
 
         miCerrarSesion.setAccelerator(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_L, java.awt.event.InputEvent.CTRL_DOWN_MASK));
         miSalir.setAccelerator        (KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_Q, java.awt.event.InputEvent.CTRL_DOWN_MASK));
@@ -185,6 +198,7 @@ public class MainWindow extends JFrame {
         btnUsuarios = mkNav("Usuarios");
         btnCitas    = mkNav("Citas");
         btnClientes = mkNav("Clientes");
+        btnProductos  = mkNav("Productos");
         btnMascotas = mkNav("Mascotas");
         JButton btnCerrar = mkNav("Cerrar sesión");
 
@@ -193,6 +207,7 @@ public class MainWindow extends JFrame {
         menu.add(btnCitas);
         menu.add(btnClientes);
         menu.add(btnMascotas);
+        menu.add(btnProductos);
 
         side.add(menu, BorderLayout.CENTER);
 
@@ -209,6 +224,9 @@ public class MainWindow extends JFrame {
         btnClientes.addActionListener(e -> { cards.show(content, "clientes"); if (clienteView != null) clienteView.recargarTabla(); });
         btnCitas.addActionListener(e -> { cards.show(content, "citas"); if (citasView != null) citasView.recargarTabla(); });
         btnMascotas.addActionListener(e -> { cards.show(content, "mascotas"); if (mascotaView != null) mascotaView.recargarTabla(); });
+        btnProductos.addActionListener(e -> {cards.show(content, "productos");if (productosView != null) productosView.recargarTabla();});
+
+        
         btnCerrar.addActionListener(e -> {
             SessionManager.get().logout();
             JOptionPane.showMessageDialog(this, "Sesión cerrada.");
@@ -729,6 +747,9 @@ public class MainWindow extends JFrame {
     public JButton getBtnMascotas() { return btnMascotas; }
     public JButton getBtnCitas() { return btnCitas; }
     public JButton getBtnUsuarios() { return btnUsuarios; }
+    public JMenuItem getMiProductos() { return miProductos; }
+    public JButton   getBtnProductos() { return btnProductos; }
+
 
     public static void main(String[] args) {
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception e) { e.printStackTrace(); }
