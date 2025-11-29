@@ -15,11 +15,18 @@ public class PermisosAdmin implements IPermisosRol {
         mainWindow.getMiMascotas().setVisible(true);
         mainWindow.getMiCitas().setVisible(true);
         mainWindow.getMiUsuarios().setVisible(true); // El Admin sí ve Usuarios
+        mainWindow.getMiPagos().setVisible(true);
 
         // Menú Lateral
         mainWindow.getBtnClientes().setVisible(true);
         mainWindow.getBtnMascotas().setVisible(true);
         mainWindow.getBtnCitas().setVisible(true);
         mainWindow.getBtnUsuarios().setVisible(true); // El Admin sí ve Usuarios
+       
+        mainWindow.getBtnHistorial().setVisible(true); // Historial
+        mainWindow.getMiHistorial().setVisible(true);  //Historial
+
+        mainWindow.getBtnPagos().setVisible(true);
+
     }
 }
